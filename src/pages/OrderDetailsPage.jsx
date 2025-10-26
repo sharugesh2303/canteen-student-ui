@@ -1,3 +1,4 @@
+// OrderDetailsPage.jsx - Ensure your file matches this exactly
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -14,6 +15,7 @@ const getAuthHeaders = (token) => ({
 
 // Helper to determine the status badge styling
 const getStatusDisplay = (status) => {
+// ... (getStatusDisplay function remains the same)
     const statusLower = status ? status.toLowerCase() : 'unknown';
     let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
     let Icon = FaClock;
@@ -55,22 +57,22 @@ const OrderDetailsPage = () => {
 
     // 2. Fetch Order Data, triggered when token and orderId are available
     useEffect(() => {
-        // If token and orderId are present, run the fetch function
+        // Run fetch when token and orderId are present.
         if (token && orderId) {
             const fetchOrder = async () => {
-                // Set loading state *before* API call
+                // Ensure loading state is set before API call
                 if (!order) setLoading(true); 
 
                 try {
-                    // This request must execute
+                    // This request is key: /api/orders/:id
                     const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
                         headers: getAuthHeaders(token),
                     });
                     setOrder(response.data);
                 } catch (err) {
                     console.error("Order Fetch Error:", err.response || err.message);
+                    // If this catch block executes, it indicates the request failed or returned a non-200 status
                     if (err.response?.status === 401) {
-                        // If token is invalid, force relogin
                         navigate('/login', { replace: true });
                     } else {
                         setError('Failed to fetch order details. It may be expired or invalid.');
@@ -85,8 +87,6 @@ const OrderDetailsPage = () => {
             setLoading(false);
         }
     }, [token, orderId, navigate]); 
-
-    // --- Loading and Error States (Unchanged but important) ---
 
     if (loading) {
         return (
