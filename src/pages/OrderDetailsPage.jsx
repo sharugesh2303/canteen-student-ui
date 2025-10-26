@@ -12,7 +12,6 @@ const getAuthHeaders = (token) => ({
     'Authorization': `Bearer ${token}`
 });
 
-// Helper to determine the status badge styling
 const getStatusDisplay = (status) => {
     const statusLower = status ? status.toLowerCase() : 'unknown';
     let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
@@ -50,7 +49,7 @@ const getStatusDisplay = (status) => {
 const OrderDetailsPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    // Get the ID from the URL parameter
+    // 🟢 Get the ID from the URL parameter
     const { orderId } = useParams(); 
     
     // States for data fetching (initialize with state data if available)
@@ -75,7 +74,7 @@ const OrderDetailsPage = () => {
             }
 
             try {
-                // API CALL: Use the orderId from the URL to fetch data
+                // 🟢 API CALL: Use the orderId from the URL to fetch data
                 const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
                     headers: getAuthHeaders(token),
                 });
