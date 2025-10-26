@@ -12,6 +12,7 @@ import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
 // --- CONFIGURATION ---
 // 🟢 FIX APPLIED: Use VITE_API_URL from environment variables (set in Vercel)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_ROOT_URL = API_BASE_URL.replace('/api', '');
 
 // Helper function to dynamically load the Razorpay script
 const loadRazorpayScript = (src) => {
@@ -26,9 +27,24 @@ const loadRazorpayScript = (src) => {
 
 // Helper function for Authorization Header
 const getAuthHeaders = (token) => ({
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
 });
+
+// ================================================
+// 🟢 FIX: Image URL Resolver for CartPage 🟢
+// Ensures all relative image paths (/uploads/...) are prefixed with the secure host.
+// ================================================
+const getFullImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/80x80/1e293b/475569?text=IMG';
+
+    if (imagePath.startsWith('http')) {
+        return imagePath;
+    }
+
+    return `${API_ROOT_URL}${imagePath.startsWith('/') ? imagePath : '/uploads/' + imagePath}`;
+};
+// ================================================
 
 const CartPage = () => {
     const { cart, setCart } = useCart();
@@ -146,9 +162,9 @@ const CartPage = () => {
                             razorpay_signature: response.razorpay_signature,
                             orderPayload: { items: cart, totalAmount: totalPrice }, 
                         }, { 
-                            // 🟢 FIX: Use Bearer token for Authorization
-                            headers: getAuthHeaders(token)
-                        });
+                            // 🟢 FIX: Use Bearer token for Authorization
+                            headers: getAuthHeaders(token)
+                        });
 
                         if (verificationResponse.data.order) {
                             setCart([]);
@@ -223,7 +239,7 @@ const CartPage = () => {
                                         className="flex items-center justify-between border-b border-slate-700 py-4 transition-all duration-300 hover:bg-slate-700/50 rounded-lg px-2 my-2"
                                     >
                                         <div className="flex items-center gap-4 flex-1">
-                                            <img src={item.imageUrl} alt={item.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg border border-slate-600" />
+                                            <img src={getFullImageUrl(item.imageUrl)} alt={item.name} className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg border border-slate-600" />
                                             <div>
                                                 <h2 className="text-lg font-semibold capitalize text-slate-100">{item.name}</h2>
                                                 <p className="text-slate-400">₹{item.price.toFixed(2)}</p>
