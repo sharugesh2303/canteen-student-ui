@@ -3,12 +3,10 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 // --- API Configuration ---
-// FIX APPLIED: Temporarily hardcode API path for compilation environments
-// NOTE: For live deployment on Vercel, this relies on VITE_API_URL being correctly injected.
-const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'; 
 // --- End API Config ---
 
-// --- SVG Icons (for a clean, dependency-free component) ---
+// --- SVG Icons (using inline SVGs for stability) ---
 const UserIcon = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 448 512" fill="currentColor">
         <path d="M224 256A128 128 0 1 0 224 0a128 128 0 1 0 0 256zm-45.7 48C79.8 304 0 383.8 0 482.3C0 498.7 13.3 512 29.7 512H418.3c16.4 0 29.7-13.3 29.7-29.7C448 383.8 368.2 304 269.7 304H178.3z"/>
@@ -41,11 +39,9 @@ const LoginPage = () => {
         setError('');
         setLoading(true);
         try {
-            // Using the constant API_BASE_URL
             const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
 
             localStorage.setItem('token', response.data.token);
-            // Ensure data is saved under the 'student' key
             localStorage.setItem('student', JSON.stringify(response.data.student));
             
             navigate('/dashboard');
@@ -57,7 +53,6 @@ const LoginPage = () => {
         }
     };
         
-    // This tells the browser to look for 'jjcet.jpg' in your project's `public` folder.
     const backgroundImageUrl = '/jjcet.jpg';
 
     return (
@@ -65,7 +60,6 @@ const LoginPage = () => {
             className="min-h-screen bg-cover bg-center" 
             style={{ backgroundImage: `url(${backgroundImageUrl})` }}
         >
-            {/* This inner div creates the dark overlay for readability */}
             <div className="min-h-screen bg-black bg-opacity-50 flex flex-col items-center justify-center p-4">
                 <div className="text-center text-white mb-8">
                     <div className="inline-block bg-white p-4 rounded-full mb-4 shadow-lg">
