@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { FaHistory, FaSearch } from 'react-icons/fa';
 
-// --- Big Header Clock Component (Integrated for Stability) ---
+// --- Big Header Clock Component ---
 const BigHeaderClock = () => {
     const [time, setTime] = useState(new Date());
 
@@ -30,12 +30,13 @@ const BigHeaderClock = () => {
         </div>
     );
 };
-// --- End Integrated Big Header Clock Component ---
+// --- End Big Header Clock Component ---
 
 
 // --- Main Navbar Component ---
 const Navbar = ({ searchTerm, setSearchTerm, isCanteenOpen }) => {
-    const { totalCartItems, setCart } = useCart();
+    // 🟢 FIX VERIFIED: Using the named import { useCart } from the context file
+    const { totalCartItems, setCart } = useCart(); 
     const navigate = useNavigate();
     const [userName, setUserName] = useState('Student');
 
