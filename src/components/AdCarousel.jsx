@@ -3,38 +3,38 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa'; // 1. Import ico
 
 const AdCarousel = ({ ads }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    // Use a ref to store the interval ID
-    const intervalRef = useRef(null); 
+    // Use a ref to store the interval ID
+    const intervalRef = useRef(null); 
 
-    // Function to advance the slide
-    const nextSlide = () => {
-        setCurrentIndex(prevIndex => (prevIndex + 1) % ads.length);
-    };
+    // Function to advance the slide
+    const nextSlide = () => {
+        setCurrentIndex(prevIndex => (prevIndex + 1) % ads.length);
+    };
 
-    // Function to restart the automatic timer
-    const startAutoSlide = () => {
-        // Clear any existing timer first
-        if (intervalRef.current) {
-            clearInterval(intervalRef.current);
-        }
-        
-        // Only start if there's more than one ad
-        if (ads && ads.length > 1) {
-            intervalRef.current = setInterval(nextSlide, 5000);
-        }
-    };
+    // Function to restart the automatic timer
+    const startAutoSlide = () => {
+        // Clear any existing timer first
+        if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+        }
+        
+        // Only start if there's more than one ad
+        if (ads && ads.length > 1) {
+            intervalRef.current = setInterval(nextSlide, 5000); // Auto-rotates every 5 seconds
+        }
+    };
 
     // This effect manages the automatic sliding interval
     useEffect(() => {
-        startAutoSlide();
+        startAutoSlide();
         
-        // Clear the interval when the component unmounts
+        // Cleanup function to clear the interval when the component unmounts
         return () => {
-            if (intervalRef.current) {
-                clearInterval(intervalRef.current);
-            }
-        };
-    // Re-run if ads change (e.g., loaded for the first time)
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+            }
+        };
+    // Re-run if ads change (e.g., loaded for the first time)
     }, [ads.length]); 
 
     if (!ads || ads.length === 0) {
@@ -42,24 +42,23 @@ const AdCarousel = ({ ads }) => {
     }
 
     // --- 3. Add handler functions for manual navigation ---
-    // Start auto slide again after a brief pause when user interacts
     const goToPrevious = () => {
         const isFirstSlide = currentIndex === 0;
         const newIndex = isFirstSlide ? ads.length - 1 : currentIndex - 1;
         setCurrentIndex(newIndex);
-        startAutoSlide(); 
+        startAutoSlide(); // Restart timer after user interaction
     };
 
     const goToNext = () => {
         const isLastSlide = currentIndex === ads.length - 1;
         const newIndex = isLastSlide ? 0 : currentIndex + 1;
         setCurrentIndex(newIndex);
-        startAutoSlide();
+        startAutoSlide(); // Restart timer after user interaction
     };
 
     const goToSlide = (slideIndex) => {
         setCurrentIndex(slideIndex);
-        startAutoSlide();
+        startAutoSlide(); // Restart timer after user interaction
     };
 
     return (
@@ -79,7 +78,7 @@ const AdCarousel = ({ ads }) => {
                 </div>
             ))}
             
-            {/* --- 4. Left and Right Arrow Buttons (Only visible on hover if > 1 ad) --- */}
+            {/* --- 4. Left and Right Arrow Buttons --- */}
             {ads.length > 1 && (
                 <>
                     <button onClick={goToPrevious} className="absolute top-1/2 -translate-y-1/2 left-4 text-white bg-black bg-opacity-30 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -91,18 +90,18 @@ const AdCarousel = ({ ads }) => {
                 </>
             )}
 
-            {/* --- 5. Navigation Dots (z-index added to ensure visibility) --- */}
+            {/* --- 5. Navigation Dots --- */}
             {ads.length > 1 && (
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
-                    {ads.map((slide, slideIndex) => (
-                        <button
-                            key={slideIndex}
-                            onClick={() => goToSlide(slideIndex)}
-                            className={`w-3 h-3 rounded-full transition-colors ${currentIndex === slideIndex ? 'bg-white' : 'bg-white bg-opacity-50 hover:bg-opacity-80'}`}
-                        ></button>
-                    ))}
-                </div>
-            )}
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2 z-20">
+                    {ads.map((slide, slideIndex) => (
+                        <button
+                            key={slideIndex}
+                            onClick={() => goToSlide(slideIndex)}
+                            className={`w-3 h-3 rounded-full transition-colors ${currentIndex === slideIndex ? 'bg-white' : 'bg-white bg-opacity-50 hover:bg-opacity-80'}`}
+                        ></button>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
