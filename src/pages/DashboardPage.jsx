@@ -4,23 +4,19 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar.jsx'; // Assuming this component exists
-import { useCart } from '../context/CartContext.jsx'; // Assuming this context exists
-import AdvertisementModal from '../components/AdvertisementModal.jsx'; // Assuming this component exists
+import Navbar from '../components/Navbar.jsx'; 
+import { useCart } from '../context/CartContext.jsx'; 
+import AdvertisementModal from '../components/AdvertisementModal.jsx'; 
 import { FaCommentDots, FaCartPlus, FaHeart, FaRegHeart, FaArrowLeft } from 'react-icons/fa';
-// 🟢 UPDATED: Import icons, adding GiNotebook for both Stationery and Essentials
 import { GiFastNoodles, GiNotebook, GiIceCreamCone, GiHotMeal } from 'react-icons/gi';
 import axios from 'axios';
 
 // --- API Configuration ---
-// 🟢 FIX 1: Use VITE_API_URL from environment variables (set in Vercel)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'; 
-// Use the root URL (without /api) for images. Assuming API_BASE_URL is 'https://host/api'.
 const API_ROOT_URL = API_BASE_URL.replace('/api', '');
 // --- End API Config ---
 
 const POLLING_INTERVAL = 15000;
-const VIEWER_ROTATION_INTERVAL = 5000;
 
 const DEFAULT_SERVICE_HOURS = {
     breakfastStart: '08:00',
@@ -29,27 +25,19 @@ const DEFAULT_SERVICE_HOURS = {
     lunchEnd: '15:00',
 };
 
-// ================================================
-// 🟢 FIX 2: Image URL Resolver (Resolves Mixed Content Error) 🟢
-// This ensures all relative image paths (/uploads/...) are prefixed 
-// with the secure (HTTPS) Render host URL.
-// ================================================
+// --- Image URL Resolver (Resolves Mixed Content Error) ---
 const getFullImageUrl = (imagePath) => {
-    if (!imagePath) return 'https://placehold.co/400x300/1e293b/475569?text=Image'; // Default placeholder
+    if (!imagePath) return 'https://placehold.co/400x300/1e293b/475569?text=Image';
 
-    // If already a full URL (http or https), use it.
     if (imagePath.startsWith('http')) {
         return imagePath;
     }
 
-    // If it's a relative path (e.g., /uploads/123.jpg), prepend the secure root URL.
     return `${API_ROOT_URL}${imagePath.startsWith('/') ? imagePath : '/uploads/' + imagePath}`;
 };
-// ================================================
-// !!! END OF IMAGE FIX !!!
-// ================================================
+// --- End Image URL Resolver ---
 
-// --- SparkleOverlay Component ---
+// --- SparkleOverlay Component (omitted for brevity) ---
 const SparkleOverlay = () => {
     const random = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
     const sparks = Array.from({ length: 40 }).map((_, i) => {
@@ -75,33 +63,56 @@ const SparkleOverlay = () => {
     );
 };
 
-// --- Ad Rotator Component ---
-const AdRotatorComponent = ({ activeAds, showAdModal, setShowAdModal }) => {
-    const [currentAdIndex, setCurrentAdIndex] = useState(0);
+// ================================================
+// 🟢 FIX: Ad Banner Component (Only shows a static banner)
+// ================================================
+const AdBanner = ({ activeAds }) => {
+    if (!activeAds || activeAds.length === 0) {
+        // Placeholder when no ads are active
+        return (
+            <div className="w-full max-w-lg mx-auto min-h-[250px] overflow-hidden relative mb-8 rounded-lg shadow-xl bg-slate-800/50 flex items-center justify-center border border-slate-700">
+                <p className="text-xl font-bold text-slate-400">Welcome to the Canteen Menu</p>
+            </div>
+        );
+    }
+    
+    // Show the first ad as a static banner
+    const ad = activeAds[0]; 
+    
+    return (
+        <div className="w-full max-w-lg mx-auto min-h-[250px] overflow-hidden relative mb-8 rounded-lg shadow-xl bg-slate-800/50 flex items-center justify-center border border-slate-700">
+            <img 
+                src={getFullImageUrl(ad.imageUrl)} 
+                alt="Advertisement Banner" 
+                className="absolute w-full h-full object-cover" 
+            />
+        </div>
+    );
+};
+
+// --- Ad Modal Display Component (Manages the one-time pop-up state) ---
+const AdModalDisplay = ({ activeAds, showAdModal, setShowAdModal }) => {
+    // Logic to only show the modal once per session
     useEffect(() => {
         if (activeAds && activeAds.length > 0 && !sessionStorage.getItem('adShown')) {
             setShowAdModal(true);
             sessionStorage.setItem('adShown', 'true');
         }
     }, [activeAds, setShowAdModal]);
-    useEffect(() => {
-        if (!activeAds || activeAds.length < 2) return;
-        const timer = setInterval(() => setCurrentAdIndex(p => (p + 1) % activeAds.length), VIEWER_ROTATION_INTERVAL);
-        return () => clearInterval(timer);
-    }, [activeAds]);
-    if (!activeAds || activeAds.length === 0) return <div className="w-full max-w-lg mx-auto min-h-[400px] max-h-[600px] overflow-hidden relative mb-8 rounded-lg shadow-xl bg-slate-800/50 flex items-center justify-center border border-slate-700"><p className="text-2xl font-bold text-slate-400">No Advertisements Active</p></div>;
-    const currentAd = activeAds[currentAdIndex];
+
+    if (!showAdModal || !activeAds || activeAds.length === 0) return null;
+    
+    // We only show the first ad in the modal, and the modal component handles the time/skip logic.
+    const currentAd = activeAds[0]; 
+
     return (
-        <>
-            {showAdModal && currentAd && <AdvertisementModal imageUrl={getFullImageUrl(currentAd.imageUrl)} onClose={() => setShowAdModal(false)} />}
-            <div className="w-full max-w-lg mx-auto min-h-[400px] max-h-[600px] overflow-hidden relative mb-8 rounded-lg shadow-xl bg-slate-800/50 flex items-center justify-center border border-slate-700">
-                {activeAds.map((ad, i) => <img key={ad._id || i} src={getFullImageUrl(ad.imageUrl)} alt={`Ad ${i + 1}`} className="absolute w-full h-full object-cover transition-opacity duration-500 ease-in-out" style={{ opacity: i === currentAdIndex ? 1 : 0 }} />)}
-            </div>
-        </>
+        <AdvertisementModal imageUrl={getFullImageUrl(currentAd.imageUrl)} onClose={() => setShowAdModal(false)} />
     );
 };
+// ================================================
 
-// --- FeedbackButton Component ---
+
+// --- FeedbackButton Component (omitted for brevity) ---
 const FeedbackButton = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [feedback, setFeedback] = useState('');
@@ -112,7 +123,6 @@ const FeedbackButton = () => {
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
-            // 🟢 FIX: Use dynamic API_BASE_URL
             const response = await fetch(`${API_BASE_URL}/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -155,7 +165,6 @@ const FeedbackButton = () => {
 };
 
 // --- MenuItemCard Component ---
-// Note: This component is defined here because DashboardPage uses it directly
 const MenuItemCard = ({ item, onAddToCart, isFavorite, onToggleFavorite }) => {
     const isOutOfStock = item.stock <= 0;
     let stockBadgeColor = isOutOfStock ? 'bg-red-600' : item.stock <= 10 ? 'bg-red-600' : item.stock <= 25 ? 'bg-yellow-600' : 'bg-green-600';
@@ -211,7 +220,7 @@ const CategoryFilter = ({ categories = [], activeCategory, setActiveCategory }) 
                 </button>
             ))}
         </div>
-    </div>
+     </div>
 );
 
 // --- SubCategory Card Component ---
@@ -238,7 +247,7 @@ const DashboardPage = () => {
     const [activeCategory, setActiveCategory] = useState('Snacks');
     const [selectedSubCategoryId, setSelectedSubCategoryId] = useState(null);
 
-    // --- Utility functions ---
+    // --- Utility functions (omitted for brevity) ---
     const timeToMinutes = (time) => {
         if (!time) return -1;
         const [h, m] = time.split(':').map(Number);
@@ -505,7 +514,7 @@ const DashboardPage = () => {
                         </div>
                     ) : (
                         <>
-                            <AdRotatorComponent activeAds={activeAds} showAdModal={showAdModal} setShowAdModal={setShowAdModal} />
+                            <AdModalDisplay activeAds={activeAds} showAdModal={showAdModal} setShowAdModal={setShowAdModal} />
                             <div className="mt-8">
                                 <CategoryFilter categories={visibleCategories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
                                 <div className="flex justify-between items-center mb-6">
