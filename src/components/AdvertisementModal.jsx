@@ -4,15 +4,15 @@ const AdvertisementModal = ({ imageUrl, onClose }) => {
     const [isSkipVisible, setIsSkipVisible] = useState(false);
 
     useEffect(() => {
-        // Timer to show the "Skip" button after 5 seconds
+        // Timer to show the "SKIP" button after 5 seconds (5000ms)
         const showSkipTimer = setTimeout(() => {
             setIsSkipVisible(true);
         }, 5000);
 
-        // Timer to automatically close the modal after 8 seconds total
+        // 🟢 UPDATED TIMER: Timer to automatically close the modal after 10 seconds total (10000ms)
         const autoCloseTimer = setTimeout(() => {
             onClose();
-        }, 8000);
+        }, 10000);
 
         // Clean up both timers if the user skips or the component unmounts
         return () => {
@@ -23,12 +23,12 @@ const AdvertisementModal = ({ imageUrl, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-            <div className="relative w-full max-w-2xl bg-white rounded-lg"> {/* Added bg-white for visibility on mobile screens */}
+            <div className="relative w-full max-w-2xl bg-white rounded-lg"> 
                 {isSkipVisible && (
                     <button
                         onClick={onClose}
-                        // 🟢 FIX: Moved button position to top-right of the image container
-                        className="absolute top-3 right-3 text-white font-bold bg-gray-700/80 px-3 py-1 rounded-full hover:bg-gray-700 transition z-10"
+                        // 🟢 FIX: Ensures button is clearly visible inside the modal on mobile
+                        className="absolute top-3 right-3 text-white font-bold bg-gray-700/80 px-3 py-1 rounded-full hover:bg-gray-700 transition z-10 text-lg"
                     >
                         SKIP
                     </button>
