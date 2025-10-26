@@ -1,9 +1,16 @@
-import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
 import Navbar from '../components/Navbar'; 
 import { FaChevronLeft, FaShoppingCart, FaCheckCircle, FaHourglassHalf, FaClock, FaClipboardCheck, FaTimesCircle } from 'react-icons/fa';
 
-// --- Status Styling Helper ---
+// --- CONFIGURATION ---
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+const getAuthHeaders = (token) => ({
+    'Authorization': `Bearer ${token}`
+});
+
 const getStatusDisplay = (status) => {
     const statusLower = status ? status.toLowerCase() : 'unknown';
     let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
@@ -37,44 +44,93 @@ const getStatusDisplay = (status) => {
     }
     return { className, Icon, text: status || 'Unknown' };
 };
-// --- End Status Helper ---
 
 const OrderDetailsPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    
-    const order = location.state?.order;
+    // 🟢 Get the ID from the URL parameter
+    const { orderId } = useParams(); 
+    
+    // States for data fetching (initialize with state data if available)
+    const [order, setOrder] = useState(location.state?.order || null);
+    const [loading, setLoading] = useState(!location.state?.order); // Load if state is missing
+    const [error, setError] = useState(null);
 
-    if (!order) {
-        // Redirect if no order data is found
-        setTimeout(() => navigate('/my-orders', { replace: true }), 1000);
-        return (
-            <div className="bg-slate-900 min-h-screen text-slate-100 p-8">
-                <p className="text-center text-xl">Order details not found. Redirecting...</p>
-            </div>
-        );
-    }
+    // Fetch order if it's missing (i.e., on direct URL access or refresh)
+    useEffect(() => {
+        if (order || !orderId) {
+            setLoading(false);
+            if (!orderId) setError('No order ID provided.');
+            return;
+        }
 
-    // Display for Bill Number and Payment Method
-    const billDisplay = order.billNumber || order.orderId;
+        const fetchOrder = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                navigate('/login', { replace: true });
+                return;
+            }
+
+            try {
+                // 🟢 API CALL: Use the orderId from the URL to fetch data
+                const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
+                    headers: getAuthHeaders(token),
+                });
+                setOrder(response.data);
+            } catch (err) {
+                console.error("Order Fetch Error:", err.response || err.message);
+                if (err.response?.status === 401) {
+                    navigate('/login', { replace: true });
+                } else {
+                    setError('Failed to fetch order details. It may be expired or invalid.');
+                }
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchOrder();
+    }, [order, orderId, navigate]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-slate-900 flex justify-center items-center">
+                <svg className="animate-spin h-10 w-10 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        );
+    }
+    
+    if (error || !order) {
+        return (
+            <div className="min-h-screen bg-slate-900 text-slate-100 p-8 text-center">
+                <h2 className="text-2xl font-bold text-red-400">Order Error</h2>
+                <p className="mt-2 text-lg text-slate-400">{error || 'Order details not found.'}</p>
+                <button onClick={() => navigate('/my-orders')} className="mt-6 bg-orange-500 text-white font-bold py-3 px-8 rounded-lg">Back to History</button>
+            </div>
+        );
+    }
+
+    // --- Data Processing for Display ---
+    const billDisplay = order.billNumber || order._id;
     const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Unknown');
-
     const orderDate = new Date(order.orderDate).toLocaleString('en-IN', {
         dateStyle: 'full', 
         timeStyle: 'short',
     });
-    
     const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
     const statusDisplay = getStatusDisplay(order.status);
-
-    return (
+    
+    return (
         <div className="bg-slate-900 min-h-screen font-sans">
             <Navbar />
             <main className="container mx-auto p-4 md:p-8">
                 
                 <div className="bg-slate-800 p-8 rounded-xl shadow-2xl max-w-5xl mx-auto border border-slate-700">
                     <button 
-                        onClick={() => navigate('/my-orders')} // Navigate back to history
+                        onClick={() => navigate('/my-orders')} 
                         className="text-slate-400 hover:text-orange-400 transition-colors flex items-center mb-6 active:scale-95"
                     >
                         <FaChevronLeft size={20} className="mr-2" /> Back to History

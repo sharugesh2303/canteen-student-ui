@@ -5,15 +5,14 @@ import axios from 'axios';
 import { FaHistory, FaCheckCircle, FaTruck, FaMoneyBillWave, FaChevronRight } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-// 🟢 FIX APPLIED: Use VITE_API_URL from environment variables (set in Vercel)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper function for Authorization Header
 const getAuthHeaders = (token) => ({
-    'Authorization': `Bearer ${token}`
+    'Authorization': `Bearer ${token}`
 });
 
-// --- Order Card Component (Remains the same) ---
+// --- Order Card Component ---
 const OrderCard = ({ order, orderIndex }) => {
     let statusIcon, statusColor;
     const status = order.status.toLowerCase();
@@ -27,10 +26,10 @@ const OrderCard = ({ order, orderIndex }) => {
             statusIcon = <FaTruck size={16} />; 
             statusColor = 'text-orange-400 bg-orange-900/50';
             break;
-        case 'pending':
-            statusIcon = <FaMoneyBillWave size={16} />;
+        case 'pending':
+            statusIcon = <FaMoneyBillWave size={16} />;
             statusColor = 'text-blue-400 bg-blue-900/50';
-            break;
+            break;
         case 'paid':
         default:
             statusIcon = <FaMoneyBillWave size={16} />;
@@ -43,7 +42,6 @@ const OrderCard = ({ order, orderIndex }) => {
         timeStyle: 'short',
     });
 
-    // 🟢 UPDATED: Target /order-details/:orderId route with the ID
     return (
         <Link 
             to={`/order-details/${order._id}`} 
