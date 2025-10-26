@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; 
 import { FaChevronLeft, FaShoppingCart, FaCheckCircle, FaHourglassHalf, FaClock, FaClipboardCheck, FaTimesCircle } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-// 🔑 FIX: Using the hardcoded, known working backend URL to eliminate VITE_API_URL issues
+// 🔑 CRITICAL FIX: Using the hardcoded, known working backend URL
 const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
 
 const getAuthHeaders = (token) => ({
@@ -55,14 +55,14 @@ const OrderDetailsPage = () => {
 
     // 2. Fetch Order Data, triggered when token and orderId are available
     useEffect(() => {
-        // Always run fetch when token and orderId are present.
+        // If token and orderId are present, run the fetch function
         if (token && orderId) {
             const fetchOrder = async () => {
-                // Ensure loading state is set before API call
+                // Set loading state *before* API call
                 if (!order) setLoading(true); 
 
                 try {
-                    // This request is key: /api/orders/:id
+                    // This request must execute
                     const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
                         headers: getAuthHeaders(token),
                     });
@@ -70,6 +70,7 @@ const OrderDetailsPage = () => {
                 } catch (err) {
                     console.error("Order Fetch Error:", err.response || err.message);
                     if (err.response?.status === 401) {
+                        // If token is invalid, force relogin
                         navigate('/login', { replace: true });
                     } else {
                         setError('Failed to fetch order details. It may be expired or invalid.');
@@ -80,10 +81,12 @@ const OrderDetailsPage = () => {
             };
             fetchOrder();
         } else if (token && !orderId) {
-            // If token is present but no orderId, stop loading
+            // Stop loading if token is fine but URL is bad
             setLoading(false);
         }
     }, [token, orderId, navigate]); 
+
+    // --- Loading and Error States (Unchanged but important) ---
 
     if (loading) {
         return (
@@ -106,7 +109,7 @@ const OrderDetailsPage = () => {
         );
     }
 
-    // --- Data Processing for Display ---
+    // --- Render Logic (Unchanged) ---
     const billDisplay = order.billNumber || order._id;
     const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Unknown');
     const orderDate = new Date(order.orderDate).toLocaleString('en-IN', {
