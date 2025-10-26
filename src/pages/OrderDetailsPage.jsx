@@ -5,7 +5,8 @@ import Navbar from '../components/Navbar';
 import { FaChevronLeft, FaShoppingCart, FaCheckCircle, FaHourglassHalf, FaClock, FaClipboardCheck, FaTimesCircle } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// 🔑 FIX: Using the hardcoded, known working backend URL to eliminate VITE_API_URL issues
+const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
 
 const getAuthHeaders = (token) => ({
     'Authorization': `Bearer ${token}`
@@ -32,8 +33,6 @@ const OrderDetailsPage = () => {
     const navigate = useNavigate();
     const { orderId } = useParams(); 
     
-    // NOTE: We don't use location.state anymore to set initial order, 
-    // we always fetch for robustness.
     const [order, setOrder] = useState(null); 
     const [token, setToken] = useState(null); 
     const [loading, setLoading] = useState(true); 
@@ -56,7 +55,7 @@ const OrderDetailsPage = () => {
 
     // 2. Fetch Order Data, triggered when token and orderId are available
     useEffect(() => {
-        // 🔑 FIX APPLIED: Check only for token and orderId. We always fetch now.
+        // Always run fetch when token and orderId are present.
         if (token && orderId) {
             const fetchOrder = async () => {
                 // Ensure loading state is set before API call

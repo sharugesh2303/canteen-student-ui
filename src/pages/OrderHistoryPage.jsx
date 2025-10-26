@@ -5,7 +5,7 @@ import axios from 'axios';
 import { FaHistory, FaCheckCircle, FaTruck, FaMoneyBillWave, FaChevronRight } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-// 🟢 FIX APPLIED: Using hardcoded fallback path to bypass Vercel import.meta warnings
+// 🔑 FIX: Ensuring this page uses the definitive backend URL too.
 const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
 
 // Helper function for Authorization Header
@@ -13,8 +13,9 @@ const getAuthHeaders = (token) => ({
     'Authorization': `Bearer ${token}`
 });
 
-// --- Order Card Component ---
+// --- Order Card Component (Unchanged) ---
 const OrderCard = ({ order, orderIndex }) => {
+// ... (OrderCard code remains the same as previously provided)
     let statusIcon, statusColor;
     const status = order.status.toLowerCase();
 
@@ -104,7 +105,7 @@ const OrderHistoryPage = () => {
 
     const fetchCanteenStatus = async () => {
         try {
-            // 🟢 FIX: Use dynamic API_BASE_URL
+            // Using hardcoded API_BASE_URL
             const statusRes = await axios.get(`${API_BASE_URL}/canteen-status/public`); 
             setIsCanteenOpen(statusRes.data.isOpen);
             return statusRes.data.isOpen;
@@ -129,7 +130,7 @@ const OrderHistoryPage = () => {
         }
 
         try {
-            // 🟢 FIX: Use dynamic API_BASE_URL and Bearer token headers
+            // Using hardcoded API_BASE_URL and Bearer token headers
             const response = await axios.get(`${API_BASE_URL}/orders/my-history`, {
                 headers: getAuthHeaders(token),
             });
