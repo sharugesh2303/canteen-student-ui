@@ -11,39 +11,21 @@ const getAuthHeaders = (token) => ({
     'Authorization': `Bearer ${token}`
 });
 
+// Helper to determine the status badge styling (omitted for brevity)
 const getStatusDisplay = (status) => {
-    // ... (status display helper remains the same) ...
-    const statusLower = status ? status.toLowerCase() : 'unknown';
-    let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
-    let Icon = FaClock;
+    const statusLower = status ? status.toLowerCase() : 'unknown';
+    let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
+    let Icon = FaClock;
 
-    switch (statusLower) {
-        case 'ready':
-            Icon = FaClipboardCheck;
-            className += ' bg-green-500 text-white';
-            break;
-        case 'paid':
-            Icon = FaHourglassHalf;
-            className += ' bg-yellow-500 text-gray-900';
-            break;
-        case 'pending':
-            Icon = FaClock;
-            className += ' bg-blue-500 text-white';
-            break;
-        case 'delivered':
-        case 'completed':
-            Icon = FaCheckCircle;
-            className += ' bg-green-600 text-white';
-            break;
-        case 'cancelled':
-            Icon = FaTimesCircle;
-            className += ' bg-red-600 text-white';
-            break;
-        default:
-            Icon = FaClock;
-            className += ' bg-slate-500 text-white';
-    }
-    return { className, Icon, text: status || 'Unknown' };
+    switch (statusLower) {
+        case 'ready': Icon = FaClipboardCheck; className += ' bg-green-500 text-white'; break;
+        case 'paid': Icon = FaHourglassHalf; className += ' bg-yellow-500 text-gray-900'; break;
+        case 'pending': Icon = FaClock; className += ' bg-blue-500 text-white'; break;
+        case 'delivered': case 'completed': Icon = FaCheckCircle; className += ' bg-green-600 text-white'; break;
+        case 'cancelled': Icon = FaTimesCircle; className += ' bg-red-600 text-white'; break;
+        default: Icon = FaClock; className += ' bg-slate-500 text-white';
+    }
+    return { className, Icon, text: status || 'Unknown' };
 };
 
 const OrderDetailsPage = () => {
@@ -51,51 +33,56 @@ const OrderDetailsPage = () => {
     const navigate = useNavigate();
     const { orderId } = useParams(); 
     
-    // Initialize state: Check if order data is already in state
     const [order, setOrder] = useState(location.state?.order || null);
-    // Start loading if no order data was passed in the state (i.e., browser refresh)
-    const [loading, setLoading] = useState(!location.state?.order && !!orderId);
+    const [token, setToken] = useState(null); // 🟢 NEW STATE: Hold token explicitly
+    const [loading, setLoading] = useState(true); // Always start loading until token is checked
     const [error, setError] = useState(null);
 
-    // Fetch order if it's missing (i.e., on direct URL access or refresh)
-    useEffect(() => {
-        // If we already have the order OR if the ID is missing, stop here.
-        if (order || !orderId) {
-            setLoading(false);
-            if (!orderId) setError('No order ID provided in URL.');
+    // 1. Check for Token and Initialize Loading State
+    useEffect(() => {
+        const storedToken = localStorage.getItem('token');
+        if (!storedToken) {
+            navigate('/login', { replace: true });
             return;
         }
+        setToken(storedToken);
 
-        const fetchOrder = async () => {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                navigate('/login', { replace: true });
-                return;
-            }
+        // Only load if order data is NOT in location.state
+        if (location.state?.order) {
+            setLoading(false);
+        } else if (!orderId) {
+            setError('No order ID provided.');
+            setLoading(false);
+        }
+    }, [navigate, location.state, orderId]);
 
-            try {
-                const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
-                    headers: getAuthHeaders(token),
-                });
-                setOrder(response.data);
-            } catch (err) {
-                console.error("Order Fetch Error:", err.response || err.message);
-                if (err.response?.status === 401) {
-                    navigate('/login', { replace: true });
-                } else {
-                    // Providing more helpful error text for the 404 scenario
-                    setError('Failed to fetch order details. Please check if your Render backend is running.');
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        // 🟢 FIX: Call fetchOrder only if the component has fully mounted AND data is truly missing.
-        fetchOrder();
-    }, [order, orderId, navigate]); // Added 'order' dependency to prevent unnecessary initial fetch if state was passed.
+    // 2. Fetch Order Data, triggered ONLY when token and orderId are available
+    useEffect(() => {
+        // Run fetch only if we have a token, an orderId, and the order data is missing.
+        if (token && orderId && !order) {
+            const fetchOrder = async () => {
+                setLoading(true);
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
+                        headers: getAuthHeaders(token),
+                    });
+                    setOrder(response.data);
+                } catch (err) {
+                    console.error("Order Fetch Error:", err.response || err.message);
+                    if (err.response?.status === 401) {
+                        navigate('/login', { replace: true });
+                    } else {
+                        setError('Failed to fetch order details. It may be expired or invalid.');
+                    }
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchOrder();
+        }
+        // If order exists, ensure loading is false
+        if (order) setLoading(false);
+    }, [token, order, orderId, navigate, location.state]); // Dependencies updated
 
     if (loading) {
         return (
