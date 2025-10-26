@@ -35,7 +35,7 @@ const BigHeaderClock = () => {
 
 // --- Main Navbar Component ---
 const Navbar = ({ searchTerm, setSearchTerm, isCanteenOpen }) => {
-    // 🟢 FIX VERIFIED: Using the named import { useCart } from the context file
+    // FIX VERIFIED: Using the named import { useCart } from the context file
     const { totalCartItems, setCart } = useCart(); 
     const navigate = useNavigate();
     const [userName, setUserName] = useState('Student');

@@ -5,7 +5,8 @@ import axios from 'axios';
 import { FaHistory, FaCheckCircle, FaTruck, FaMoneyBillWave, FaChevronRight } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// 🟢 FIX APPLIED: Using hardcoded fallback path to bypass Vercel import.meta warnings
+const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
 
 // Helper function for Authorization Header
 const getAuthHeaders = (token) => ({
