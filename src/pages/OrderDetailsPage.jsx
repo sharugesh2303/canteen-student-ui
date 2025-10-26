@@ -1,4 +1,3 @@
-// OrderDetailsPage.jsx - Ensure your file matches this exactly
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
@@ -15,7 +14,6 @@ const getAuthHeaders = (token) => ({
 
 // Helper to determine the status badge styling
 const getStatusDisplay = (status) => {
-// ... (getStatusDisplay function remains the same)
     const statusLower = status ? status.toLowerCase() : 'unknown';
     let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
     let Icon = FaClock;
@@ -40,7 +38,7 @@ const OrderDetailsPage = () => {
     const [loading, setLoading] = useState(true); 
     const [error, setError] = useState(null);
 
-    // 1. Check for Token and OrderId
+    // 1. Check for Token and OrderId (Runs once on mount)
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         if (!storedToken) {
@@ -57,7 +55,7 @@ const OrderDetailsPage = () => {
 
     // 2. Fetch Order Data, triggered when token and orderId are available
     useEffect(() => {
-        // Run fetch when token and orderId are present.
+        // Run fetch when token and orderId are confirmed.
         if (token && orderId) {
             const fetchOrder = async () => {
                 // Ensure loading state is set before API call
@@ -71,10 +69,10 @@ const OrderDetailsPage = () => {
                     setOrder(response.data);
                 } catch (err) {
                     console.error("Order Fetch Error:", err.response || err.message);
-                    // If this catch block executes, it indicates the request failed or returned a non-200 status
                     if (err.response?.status === 401) {
                         navigate('/login', { replace: true });
                     } else {
+                        // Setting the error state will show the error message on screen
                         setError('Failed to fetch order details. It may be expired or invalid.');
                     }
                 } finally {
@@ -82,11 +80,13 @@ const OrderDetailsPage = () => {
                 }
             };
             fetchOrder();
-        } else if (token && !orderId) {
-            // Stop loading if token is fine but URL is bad
+        } else if (!token || !orderId) {
+            // Stop loading if token or ID is missing
             setLoading(false);
         }
     }, [token, orderId, navigate]); 
+
+    // --- Loading and Error States ---
 
     if (loading) {
         return (
@@ -109,7 +109,7 @@ const OrderDetailsPage = () => {
         );
     }
 
-    // --- Render Logic (Unchanged) ---
+    // --- Render Logic ---
     const billDisplay = order.billNumber || order._id;
     const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Unknown');
     const orderDate = new Date(order.orderDate).toLocaleString('en-IN', {
