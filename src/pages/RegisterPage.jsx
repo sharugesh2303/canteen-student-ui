@@ -77,7 +77,6 @@ const RegisterPage = () => {
             <div className="absolute inset-0 bg-black opacity-60"></div>
             
             <div className="text-center text-white mb-8 relative z-10">
-                {/* 🟢 UPDATED: CapIcon background color to match darker theme */}
                 <div className="inline-block bg-gray-700 p-4 rounded-full mb-4 shadow-lg">
                     <CapIcon size={40} className="text-indigo-400" />
                 </div>
@@ -85,45 +84,43 @@ const RegisterPage = () => {
                 <p className="text-lg mt-2 font-light text-indigo-400">Student Register</p>
             </div>
 
-            {/* 🟢 UPDATED: Form container styling */}
+            {/* UPDATED: Form container styling */}
             <div className="relative z-10 p-8 bg-gray-800 bg-opacity-90 rounded-xl shadow-2xl w-full max-w-md text-center border-t-4 border-indigo-500">
                 <h2 className="text-2xl font-bold text-white text-center mb-6">Create New Account</h2>
                 
                 <form className="space-y-4" onSubmit={isOtpSent ? handleVerifyOtp : handleSendOtp}>
                     
+                    {/* --- STEP 1: Registration Details (Visible until OTP is sent) --- */}
                     {!isOtpSent && (
                         <>
                             <div className="relative">
-                                {/* 🟢 UPDATED: Label color */}
                                 <label htmlFor="name" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Name</label>
-                                <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3">
+                                {/* 🟢 FIX ALIGNMENT: Use inset-y-0 and items-center */}
+                                <span className="absolute inset-y-0 left-0 top-[18px] flex items-center pl-3">
                                     <UserIcon className="text-gray-400 w-5 h-5" />
                                 </span>
-                                {/* 🟢 UPDATED: Input styling */}
                                 <input type="text" id="name" placeholder="Full Name" required
                                     className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     value={name} onChange={(e) => setName(e.target.value)} />
                             </div>
 
                             <div className="relative">
-                                {/* 🟢 UPDATED: Label color */}
                                 <label htmlFor="email" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Email Address (for OTP)</label>
-                                <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3">
+                                {/* 🟢 FIX ALIGNMENT: Use inset-y-0 and items-center */}
+                                <span className="absolute inset-y-0 left-0 top-[18px] flex items-center pl-3">
                                     <MailIcon className="text-gray-400 w-5 h-5" />
                                 </span>
-                                {/* 🟢 UPDATED: Input styling */}
                                 <input type="email" id="email" placeholder="e.g. name@college.com" required
                                     className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     value={email} onChange={(e) => setEmail(e.target.value)} />
                             </div>
 
                             <div className="relative">
-                                {/* 🟢 UPDATED: Label color */}
                                 <label htmlFor="password" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Password</label>
-                                <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3">
+                                {/* 🟢 FIX ALIGNMENT: Use inset-y-0 and items-center */}
+                                <span className="absolute inset-y-0 left-0 top-[18px] flex items-center pl-3">
                                     <LockIcon className="text-gray-400 w-5 h-5" />
                                 </span>
-                                {/* 🟢 UPDATED: Input styling */}
                                 <input type="password" id="password" placeholder="Create Password" required
                                     className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     value={password} onChange={(e) => setPassword(e.target.value)} />
@@ -133,10 +130,9 @@ const RegisterPage = () => {
 
                     {isOtpSent && (
                         <div className="relative">
-                            {/* 🟢 UPDATED: Label color */}
                             <label htmlFor="otp" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Verification Code (Check your email)</label>
-                            <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3 text-indigo-400 font-bold">#</span>
-                            {/* 🟢 UPDATED: Input styling */}
+                            {/* 🟢 FIX ALIGNMENT: Use inset-y-0 and items-center */}
+                                <span className="absolute inset-y-0 left-0 top-[18px] flex items-center pl-3 text-indigo-400 font-bold">#</span>
                             <input type="text" id="otp" placeholder="Enter 6-digit OTP" required
                                 className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                 value={otp} onChange={(e) => setOtp(e.target.value)} />
@@ -146,7 +142,6 @@ const RegisterPage = () => {
                     {error && <p className="text-red-500 text-center text-sm">{error}</p>}
                     {successMsg && <p className="text-green-500 text-center text-sm">{successMsg}</p>}
 
-                    {/* 🟢 UPDATED: Button styling to match admin login */}
                     <button type="submit" disabled={loading}
                         className="w-full flex items-center justify-center py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition duration-200 shadow-md disabled:opacity-50">
                             {loading ? (isOtpSent ? 'Verifying...' : 'Sending OTP...') : (isOtpSent ? 'Verify OTP & Finish' : 'Register & Get OTP')}
@@ -159,8 +154,7 @@ const RegisterPage = () => {
                         Sign In
                     </Link>
                 </p>
-                {/* 🟢 UPDATED: Powered by Nexora footer with larger text and adjusted color */}
-                <p className="text-center text-gray-500 text-base mt-4"> {/* Increased text size to 'text-base' */}
+                <p className="text-center text-gray-500 text-base mt-4">
                     Powered by Nexora
                 </p>
             </div>
