@@ -5,6 +5,8 @@ import axios from 'axios';
 // --- CONFIGURATION ---
 // 🟢 FIX APPLIED: Use VITE_API_URL from environment variables (set in Vercel)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// 🟢 Background Image URL (Assumes jjcet.jpg is in the public folder)
+const BACKGROUND_IMAGE_URL = '/jjcet.jpg'; 
 // --- End API Config ---
 
 // Placeholder Icons (to avoid external dependency issues)
@@ -72,15 +74,24 @@ const RegisterPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-cyan-400 to-green-300 flex flex-col items-center justify-center p-4">
-            <div className="text-center text-white mb-8">
+        // 🟢 UPDATED: Use background image and full screen styling
+        <div 
+            className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
+            style={{ backgroundImage: `url(${BACKGROUND_IMAGE_URL})` }}
+        >
+            {/* 🟢 ADDED: Dark overlay for readability */}
+            <div className="absolute inset-0 bg-black opacity-60"></div>
+            
+            <div className="text-center text-white mb-8 relative z-10">
                 <div className="inline-block bg-white p-4 rounded-full mb-4 shadow-lg">
                     <CapIcon size={40} className="text-cyan-600" />
                 </div>
                 <h1 className="text-4xl font-bold">JJ College Canteen</h1>
                 <p className="text-lg mt-2 font-light">Student Register</p>
             </div>
-            <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg">
+
+            {/* 🟢 UPDATED: Form container with translucent background */}
+            <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg relative z-10 bg-opacity-90 backdrop-blur-sm">
                 <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Create New Account</h2>
                 
                 <form className="space-y-4" onSubmit={isOtpSent ? handleVerifyOtp : handleSendOtp}>
@@ -148,6 +159,10 @@ const RegisterPage = () => {
                         Sign In
                     </Link>
                 </p>
+                {/* 🟢 ADDED: Powered by Nexora footer */}
+                <p className="text-center text-gray-500 text-xs mt-4">
+                    Powered by Nexora
+                </p>
             </div>
         </div>
     );
