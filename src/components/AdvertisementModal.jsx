@@ -23,16 +23,21 @@ const AdvertisementModal = ({ imageUrl, onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
-            <div className="relative w-full max-w-2xl">
+            <div className="relative w-full max-w-2xl bg-white rounded-lg"> {/* Added bg-white for visibility on mobile screens */}
                 {isSkipVisible && (
                     <button
                         onClick={onClose}
-                        className="absolute -top-10 right-0 text-white font-bold bg-gray-700 bg-opacity-50 px-3 py-1 rounded-full hover:bg-opacity-100 transition animate-fade-in"
+                        // 🟢 FIX: Moved button position to top-right of the image container
+                        className="absolute top-3 right-3 text-white font-bold bg-gray-700/80 px-3 py-1 rounded-full hover:bg-gray-700 transition z-10"
                     >
-                        X
+                        SKIP
                     </button>
                 )}
-                <img src={imageUrl} alt="Advertisement" className="w-full h-auto max-h-[80vh] object-contain rounded-lg" />
+                <img 
+                    src={imageUrl} 
+                    alt="Advertisement" 
+                    className="w-full h-auto max-h-[80vh] object-contain rounded-lg" 
+                />
             </div>
         </div>
     );
