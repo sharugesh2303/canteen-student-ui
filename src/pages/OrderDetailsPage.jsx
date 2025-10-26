@@ -11,7 +11,7 @@ const getAuthHeaders = (token) => ({
     'Authorization': `Bearer ${token}`
 });
 
-// Helper to determine the status badge styling (omitted for brevity)
+// Helper to determine the status badge styling
 const getStatusDisplay = (status) => {
     const statusLower = status ? status.toLowerCase() : 'unknown';
     let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
@@ -33,56 +33,54 @@ const OrderDetailsPage = () => {
     const navigate = useNavigate();
     const { orderId } = useParams(); 
     
-    const [order, setOrder] = useState(location.state?.order || null);
-    const [token, setToken] = useState(null); // 🟢 NEW STATE: Hold token explicitly
-    const [loading, setLoading] = useState(true); // Always start loading until token is checked
+    const [order, setOrder] = useState(null); // Start with null, data will be fetched
+    const [token, setToken] = useState(null); 
+    const [loading, setLoading] = useState(true); 
     const [error, setError] = useState(null);
 
-    // 1. Check for Token and Initialize Loading State
-    useEffect(() => {
-        const storedToken = localStorage.getItem('token');
-        if (!storedToken) {
-            navigate('/login', { replace: true });
-            return;
-        }
-        setToken(storedToken);
-
-        // Only load if order data is NOT in location.state
-        if (location.state?.order) {
-            setLoading(false);
-        } else if (!orderId) {
-            setError('No order ID provided.');
-            setLoading(false);
-        }
-    }, [navigate, location.state, orderId]);
-
-    // 2. Fetch Order Data, triggered ONLY when token and orderId are available
+    // 1. Check for Token
     useEffect(() => {
-        // Run fetch only if we have a token, an orderId, and the order data is missing.
-        if (token && orderId && !order) {
-            const fetchOrder = async () => {
-                setLoading(true);
-                try {
-                    const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
-                        headers: getAuthHeaders(token),
-                    });
-                    setOrder(response.data);
-                } catch (err) {
-                    console.error("Order Fetch Error:", err.response || err.message);
-                    if (err.response?.status === 401) {
-                        navigate('/login', { replace: true });
-                    } else {
-                        setError('Failed to fetch order details. It may be expired or invalid.');
-                    }
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchOrder();
-        }
-        // If order exists, ensure loading is false
-        if (order) setLoading(false);
-    }, [token, order, orderId, navigate, location.state]); // Dependencies updated
+        const storedToken = localStorage.getItem('token');
+        if (!storedToken) {
+            navigate('/login', { replace: true });
+            return;
+        }
+        setToken(storedToken);
+
+        if (!orderId) {
+            setError('No order ID provided.');
+            setLoading(false);
+        }
+    }, [navigate, orderId]);
+
+    // 2. Fetch Order Data, triggered when token and orderId are available
+    useEffect(() => {
+        // 🔑 FIX: Always run fetch when token and orderId are present.
+        // This ensures data integrity and prevents crashes from corrupted location.state data.
+        if (token && orderId) {
+            const fetchOrder = async () => {
+                setLoading(true);
+                try {
+                    const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
+                        headers: getAuthHeaders(token),
+                    });
+                    setOrder(response.data);
+                } catch (err) {
+                    console.error("Order Fetch Error:", err.response || err.message);
+                    if (err.response?.status === 401) {
+                        navigate('/login', { replace: true });
+                    } else {
+                        setError('Failed to fetch order details. It may be expired or invalid.');
+                    }
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchOrder();
+        }
+        // Set loading to false if fetch conditions aren't met (e.g., missing token/id)
+        if (!token || !orderId) setLoading(false); 
+    }, [token, orderId, navigate]); // Dependencies updated
 
     if (loading) {
         return (
@@ -130,19 +128,19 @@ const OrderDetailsPage = () => {
 
                     
                     <div className="flex justify-between items-start border-b border-slate-700 pb-4 mb-6">
-                        <div>
-                            <h1 className="text-4xl font-extrabold text-slate-100 mb-2">
-                                Order Receipt
-                            </h1>
-                            <p className="text-lg text-orange-400 font-semibold">
-                                Bill No: {billDisplay}
-                            </p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-base font-semibold text-slate-400 mb-2">Payment Method:</span>
-                            <span className="text-lg font-bold text-slate-200">{paymentMethodDisplay}</span>
-                        </div>
-                    </div>
+                        <div>
+                            <h1 className="text-4xl font-extrabold text-slate-100 mb-2">
+                                Order Receipt
+                            </h1>
+                            <p className="text-lg text-orange-400 font-semibold">
+                                Bill No: {billDisplay}
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-end">
+                            <span className="text-base font-semibold text-slate-400 mb-2">Payment Method:</span>
+                            <span className="text-lg font-bold text-slate-200">{paymentMethodDisplay}</span>
+                        </div>
+                    </div>
 
 
                     <div className="space-y-4 text-slate-200">
