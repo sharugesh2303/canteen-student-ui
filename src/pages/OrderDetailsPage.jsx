@@ -5,7 +5,6 @@ import Navbar from '../components/Navbar';
 import { FaChevronLeft, FaShoppingCart, FaCheckCircle, FaHourglassHalf, FaClock, FaClipboardCheck, FaTimesCircle } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-// This is the correct way to get the Vercel-set environment variable
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const getAuthHeaders = (token) => ({
@@ -13,68 +12,70 @@ const getAuthHeaders = (token) => ({
 });
 
 const getStatusDisplay = (status) => {
-    const statusLower = status ? status.toLowerCase() : 'unknown';
-    let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
-    let Icon = FaClock;
+    // ... (status display helper remains the same) ...
+    const statusLower = status ? status.toLowerCase() : 'unknown';
+    let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
+    let Icon = FaClock;
 
-    switch (statusLower) {
-        case 'ready':
-            Icon = FaClipboardCheck;
-            className += ' bg-green-500 text-white';
-            break;
-        case 'paid':
-            Icon = FaHourglassHalf;
-            className += ' bg-yellow-500 text-gray-900';
-            break;
-        case 'pending':
-            Icon = FaClock;
-            className += ' bg-blue-500 text-white';
-            break;
-        case 'delivered':
-        case 'completed':
-            Icon = FaCheckCircle;
-            className += ' bg-green-600 text-white';
-            break;
-        case 'cancelled':
-            Icon = FaTimesCircle;
-            className += ' bg-red-600 text-white';
-            break;
-        default:
-            Icon = FaClock;
-            className += ' bg-slate-500 text-white';
-    }
-    return { className, Icon, text: status || 'Unknown' };
+    switch (statusLower) {
+        case 'ready':
+            Icon = FaClipboardCheck;
+            className += ' bg-green-500 text-white';
+            break;
+        case 'paid':
+            Icon = FaHourglassHalf;
+            className += ' bg-yellow-500 text-gray-900';
+            break;
+        case 'pending':
+            Icon = FaClock;
+            className += ' bg-blue-500 text-white';
+            break;
+        case 'delivered':
+        case 'completed':
+            Icon = FaCheckCircle;
+            className += ' bg-green-600 text-white';
+            break;
+        case 'cancelled':
+            Icon = FaTimesCircle;
+            className += ' bg-red-600 text-white';
+            break;
+        default:
+            Icon = FaClock;
+            className += ' bg-slate-500 text-white';
+    }
+    return { className, Icon, text: status || 'Unknown' };
 };
 
 const OrderDetailsPage = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    // 🟢 Get the ID from the URL parameter
     const { orderId } = useParams(); 
     
-    // States for data fetching (initialize with state data if available)
+    // Initialize state: Check if order data is already in state
     const [order, setOrder] = useState(location.state?.order || null);
-    // Load data if state is missing (i.e., on refresh)
-    const [loading, setLoading] = useState(!location.state?.order); 
+    // Start loading if no order data was passed in the state (i.e., browser refresh)
+    const [loading, setLoading] = useState(!location.state?.order && !!orderId);
     const [error, setError] = useState(null);
 
     // Fetch order if it's missing (i.e., on direct URL access or refresh)
     useEffect(() => {
-        if (order || !orderId) {
-            setLoading(false);
-            if (!orderId) setError('No order ID provided.');
-            return;
-        }
+        // If we already have the order OR if the ID is missing, stop here.
+        if (order || !orderId) {
+            setLoading(false);
+            if (!orderId) setError('No order ID provided in URL.');
+            return;
+        }
 
         const fetchOrder = async () => {
+            setLoading(true);
             const token = localStorage.getItem('token');
+            
             if (!token) {
                 navigate('/login', { replace: true });
                 return;
             }
 
             try {
-                // 🟢 API CALL: Use the orderId from the URL to fetch data
                 const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
                     headers: getAuthHeaders(token),
                 });
@@ -84,15 +85,17 @@ const OrderDetailsPage = () => {
                 if (err.response?.status === 401) {
                     navigate('/login', { replace: true });
                 } else {
-                    setError('Failed to fetch order details. It may be expired or invalid.');
+                    // Providing more helpful error text for the 404 scenario
+                    setError('Failed to fetch order details. Please check if your Render backend is running.');
                 }
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchOrder();
-    }, [order, orderId, navigate]);
+        // 🟢 FIX: Call fetchOrder only if the component has fully mounted AND data is truly missing.
+        fetchOrder();
+    }, [order, orderId, navigate]); // Added 'order' dependency to prevent unnecessary initial fetch if state was passed.
 
     if (loading) {
         return (
