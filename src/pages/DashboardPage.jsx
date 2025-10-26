@@ -4,15 +4,17 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Navbar from '../components/Navbar.jsx'; 
-import { useCart } from '../context/CartContext.jsx'; 
-import AdvertisementModal from '../components/AdvertisementModal.jsx'; 
+import Navbar from '../components/Navbar.jsx';
+import { useCart } from '../context/CartContext.jsx';
+import AdvertisementModal from '../components/AdvertisementModal.jsx';
 import { FaCommentDots, FaCartPlus, FaHeart, FaRegHeart, FaArrowLeft } from 'react-icons/fa';
 import { GiFastNoodles, GiNotebook, GiIceCreamCone, GiHotMeal } from 'react-icons/gi';
 import axios from 'axios';
 
 // --- API Configuration ---
+// 🟢 FIX 1: Use VITE_API_URL from environment variables (set in Vercel)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'; 
+// Use the root URL (without /api) for images. Assuming API_BASE_URL is 'https://host/api'.
 const API_ROOT_URL = API_BASE_URL.replace('/api', '');
 // --- End API Config ---
 
@@ -25,17 +27,21 @@ const DEFAULT_SERVICE_HOURS = {
     lunchEnd: '15:00',
 };
 
-// --- Image URL Resolver (Resolves Mixed Content Error) ---
+// ================================================
+// 🟢 FIX 2: Image URL Resolver (Resolves Mixed Content Error)
+// ================================================
 const getFullImageUrl = (imagePath) => {
     if (!imagePath) return 'https://placehold.co/400x300/1e293b/475569?text=Image';
 
+    // If already a full URL (http or https), use it.
     if (imagePath.startsWith('http')) {
         return imagePath;
     }
 
+    // If it's a relative path (e.g., /uploads/123.jpg), prepend the secure root URL.
     return `${API_ROOT_URL}${imagePath.startsWith('/') ? imagePath : '/uploads/' + imagePath}`;
 };
-// --- End Image URL Resolver ---
+// ================================================
 
 // --- SparkleOverlay Component (omitted for brevity) ---
 const SparkleOverlay = () => {
@@ -64,7 +70,7 @@ const SparkleOverlay = () => {
 };
 
 // ================================================
-// 🟢 FIX: Ad Banner Component (Only shows a static banner)
+// 🟢 FIX 3: Ad Banner Component (Static Display)
 // ================================================
 const AdBanner = ({ activeAds }) => {
     if (!activeAds || activeAds.length === 0) {
@@ -123,6 +129,7 @@ const FeedbackButton = () => {
         setIsSubmitting(true);
         try {
             const token = localStorage.getItem('token');
+            // 🟢 FIX: Use dynamic API_BASE_URL
             const response = await fetch(`${API_BASE_URL}/feedback`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -201,8 +208,7 @@ const MenuItemCard = ({ item, onAddToCart, isFavorite, onToggleFavorite }) => {
     );
 };
 
-// --- CategoryFilter Component ---
-// *** FIX: Added default value [] for categories prop ***
+// --- CategoryFilter Component (omitted for brevity) ---
 const CategoryFilter = ({ categories = [], activeCategory, setActiveCategory }) => (
     <div className="mb-8">
         <h2 className="text-2xl font-bold text-slate-300 mb-4">What's on your mind?</h2>
@@ -515,6 +521,10 @@ const DashboardPage = () => {
                     ) : (
                         <>
                             <AdModalDisplay activeAds={activeAds} showAdModal={showAdModal} setShowAdModal={setShowAdModal} />
+                            
+                            {/* 🟢 ADDED: The persistent, static ad banner */}
+                            <AdBanner activeAds={activeAds} />
+                            
                             <div className="mt-8">
                                 <CategoryFilter categories={visibleCategories} activeCategory={activeCategory} setActiveCategory={setActiveCategory} />
                                 <div className="flex justify-between items-center mb-6">
