@@ -26,8 +26,8 @@ const OrderSuccessPage = () => {
         );
     }
 
-    // Use order.paymentMethod for display
-    const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Cash on Delivery (Pending)');
+    // Use order.paymentMethod for display
+    const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Cash on Delivery (Pending)');
 
     const formattedDate = new Date(order.orderDate).toLocaleString('en-IN', {
         dateStyle: 'medium',
@@ -65,7 +65,7 @@ const OrderSuccessPage = () => {
                             <span className="font-semibold text-slate-400">Student Name:</span>
                             <span className='font-medium'>{studentName}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex justify-between">
                             <span className="font-semibold text-slate-400">Payment:</span>
                             <span className={`font-medium ${order.status === 'Paid' ? 'text-green-400' : 'text-blue-400'}`}>{paymentMethodDisplay}</span>
                         </div>
@@ -83,8 +83,9 @@ const OrderSuccessPage = () => {
                             <span className="w-1/4 text-right">PRICE</span>
                         </div>
                         {/* Itemized List Details */}
-                        {order.items.map((item) => (
-                            <div key={item._id || item.name} className="flex justify-between text-slate-300 text-sm mt-2">
+                        {order.items.map((item, index) => (
+                            // 🔑 DEFENSIVE FIX: Use index as a fallback key if item._id is missing
+                            <div key={item._id || index} className="flex justify-between text-slate-300 text-sm mt-2">
                                 <span className="w-1/2 truncate">{item.name}</span>
                                 <span className="w-1/4 text-center font-medium">{item.quantity}</span>
                                 <span className="w-1/4 text-right">₹{item.price.toFixed(2)}</span>

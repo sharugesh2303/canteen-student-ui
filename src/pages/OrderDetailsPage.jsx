@@ -5,14 +5,14 @@ import Navbar from '../components/Navbar';
 import { FaChevronLeft, FaShoppingCart, FaCheckCircle, FaHourglassHalf, FaClock, FaClipboardCheck, FaTimesCircle } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-// 🔑 CRITICAL FIX: Using the hardcoded, known working backend URL
+// CRITICAL FIX: Using the hardcoded, known working backend URL
 const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
 
 const getAuthHeaders = (token) => ({
     'Authorization': `Bearer ${token}`
 });
 
-// Helper to determine the status badge styling
+// Helper to determine the status badge styling (unchanged)
 const getStatusDisplay = (status) => {
     const statusLower = status ? status.toLowerCase() : 'unknown';
     let className = 'font-extrabold uppercase px-3 py-1 rounded-full shadow-md text-sm flex items-center gap-2';
@@ -38,55 +38,59 @@ const OrderDetailsPage = () => {
     const [loading, setLoading] = useState(true); 
     const [error, setError] = useState(null);
 
-    // 1. Check for Token and OrderId (Runs once on mount)
+
+    // 🔑 FINAL ROBUST FETCH LOGIC: Handle token retrieval and fetching in a single hook
     useEffect(() => {
+        console.log('Component mounted/updated. Starting logic.'); // 1. Log Start
+
         const storedToken = localStorage.getItem('token');
+
         if (!storedToken) {
+            console.error('No token found. Redirecting to login.');
             navigate('/login', { replace: true });
             return;
         }
+
+        // Set token state here, as it's needed for the API call
         setToken(storedToken);
 
         if (!orderId) {
+            console.error('No Order ID found in URL params.');
             setError('No order ID provided.');
             setLoading(false);
+            return;
         }
-    }, [navigate, orderId]);
 
-    // 2. Fetch Order Data, triggered when token and orderId are available
-    useEffect(() => {
-        // Run fetch when token and orderId are confirmed.
-        if (token && orderId) {
-            const fetchOrder = async () => {
-                // Ensure loading state is set before API call
-                if (!order) setLoading(true); 
+        const fetchOrder = async (tkn) => {
+            setLoading(true); 
+            console.log(`Attempting to fetch order: ${orderId} from ${API_BASE_URL}/orders/${orderId}`); // 2. Log API target
 
-                try {
-                    // This request is key: /api/orders/:id
-                    const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
-                        headers: getAuthHeaders(token),
-                    });
-                    setOrder(response.data);
-                } catch (err) {
-                    console.error("Order Fetch Error:", err.response || err.message);
-                    if (err.response?.status === 401) {
-                        navigate('/login', { replace: true });
-                    } else {
-                        // Setting the error state will show the error message on screen
-                        setError('Failed to fetch order details. It may be expired or invalid.');
-                    }
-                } finally {
-                    setLoading(false);
+            try {
+                const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
+                    headers: getAuthHeaders(tkn),
+                });
+                setOrder(response.data);
+                console.log('Order fetch successful.'); // 3. Log Success
+            } catch (err) {
+                console.error("Order Fetch Failed:", err.response?.status, err.message); // 4. Log Failure
+                if (err.response?.status === 401) {
+                    navigate('/login', { replace: true });
+                } else {
+                    setError('Failed to fetch order details. It may be expired or invalid.');
                 }
-            };
-            fetchOrder();
-        } else if (!token || !orderId) {
-            // Stop loading if token or ID is missing
-            setLoading(false);
-        }
-    }, [token, orderId, navigate]); 
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        // Only run fetch if we have the orderId and the token is non-null
+        // We pass the local variable storedToken (tkn) to avoid timing issues with state
+        fetchOrder(storedToken);
 
-    // --- Loading and Error States ---
+    }, [navigate, orderId]); // No need for 'token' in dependencies since we use the local variable
+
+    
+    // --- Rendering based on state ---
 
     if (loading) {
         return (
@@ -109,7 +113,7 @@ const OrderDetailsPage = () => {
         );
     }
 
-    // --- Render Logic ---
+    // --- Data Processing for Display ---
     const billDisplay = order.billNumber || order._id;
     const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Unknown');
     const orderDate = new Date(order.orderDate).toLocaleString('en-IN', {
