@@ -13,8 +13,10 @@ import { GiFastNoodles, GiNotebook, GiIceCreamCone, GiHotMeal } from 'react-icon
 import axios from 'axios';
 
 // --- API Configuration ---
-// 🟢 FIX: Use VITE_API_URL from environment variables (set in Vercel)
+// 🟢 FIX 1: Use VITE_API_URL from environment variables (set in Vercel)
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'; 
+// Use the root URL (without /api) for images. Assuming API_BASE_URL is 'https://host/api'.
+const API_ROOT_URL = API_BASE_URL.replace('/api', '');
 // --- End API Config ---
 
 const POLLING_INTERVAL = 15000;
@@ -26,6 +28,26 @@ const DEFAULT_SERVICE_HOURS = {
     lunchStart: '12:00',
     lunchEnd: '15:00',
 };
+
+// ================================================
+// 🟢 FIX 2: Image URL Resolver (Resolves Mixed Content Error) 🟢
+// This ensures all relative image paths (/uploads/...) are prefixed 
+// with the secure (HTTPS) Render host URL.
+// ================================================
+const getFullImageUrl = (imagePath) => {
+    if (!imagePath) return 'https://placehold.co/400x300/1e293b/475569?text=Image'; // Default placeholder
+
+    // If already a full URL (http or https), use it.
+    if (imagePath.startsWith('http')) {
+        return imagePath;
+    }
+
+    // If it's a relative path (e.g., /uploads/123.jpg), prepend the secure root URL.
+    return `${API_ROOT_URL}${imagePath.startsWith('/') ? imagePath : '/uploads/' + imagePath}`;
+};
+// ================================================
+// !!! END OF IMAGE FIX !!!
+// ================================================
 
 // --- SparkleOverlay Component ---
 const SparkleOverlay = () => {
@@ -71,9 +93,9 @@ const AdRotatorComponent = ({ activeAds, showAdModal, setShowAdModal }) => {
     const currentAd = activeAds[currentAdIndex];
     return (
         <>
-            {showAdModal && currentAd && <AdvertisementModal imageUrl={currentAd.imageUrl} onClose={() => setShowAdModal(false)} />}
+            {showAdModal && currentAd && <AdvertisementModal imageUrl={getFullImageUrl(currentAd.imageUrl)} onClose={() => setShowAdModal(false)} />}
             <div className="w-full max-w-lg mx-auto min-h-[400px] max-h-[600px] overflow-hidden relative mb-8 rounded-lg shadow-xl bg-slate-800/50 flex items-center justify-center border border-slate-700">
-                {activeAds.map((ad, i) => <img key={ad._id || i} src={ad.imageUrl} alt={`Ad ${i + 1}`} className="absolute w-full h-full object-cover transition-opacity duration-500 ease-in-out" style={{ opacity: i === currentAdIndex ? 1 : 0 }} />)}
+                {activeAds.map((ad, i) => <img key={ad._id || i} src={getFullImageUrl(ad.imageUrl)} alt={`Ad ${i + 1}`} className="absolute w-full h-full object-cover transition-opacity duration-500 ease-in-out" style={{ opacity: i === currentAdIndex ? 1 : 0 }} />)}
             </div>
         </>
     );
@@ -133,13 +155,14 @@ const FeedbackButton = () => {
 };
 
 // --- MenuItemCard Component ---
+// Note: This component is defined here because DashboardPage uses it directly
 const MenuItemCard = ({ item, onAddToCart, isFavorite, onToggleFavorite }) => {
     const isOutOfStock = item.stock <= 0;
     let stockBadgeColor = isOutOfStock ? 'bg-red-600' : item.stock <= 10 ? 'bg-red-600' : item.stock <= 25 ? 'bg-yellow-600' : 'bg-green-600';
     return (
         <div className="bg-slate-800 rounded-xl shadow-lg overflow-hidden flex flex-col group transition-all duration-300 hover:shadow-orange-500/50 hover:shadow-xl hover:-translate-y-2 border border-slate-700 hover:ring-2 hover:ring-orange-400/50 active:scale-[0.98] cursor-pointer">
             <div className="relative">
-                <img src={item.image || 'https://placehold.co/400x300/1e293b/475569?text=Image'} alt={item.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
+                <img src={getFullImageUrl(item.image)} alt={item.name} className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300" />
                 <button
                     onClick={() => onToggleFavorite(item._id)}
                     className="absolute top-3 right-3 bg-slate-700/50 backdrop-blur-sm p-2 rounded-full z-10 transition-colors hover:bg-slate-700 hover:scale-110 active:scale-95"
@@ -194,7 +217,7 @@ const CategoryFilter = ({ categories = [], activeCategory, setActiveCategory }) 
 // --- SubCategory Card Component ---
 const SubCategoryCard = ({ subCategory, onClick }) => (
     <button onClick={onClick} className="bg-slate-800 rounded-xl shadow-lg overflow-hidden flex flex-col items-center group transition-all duration-300 hover:shadow-orange-500/50 hover:shadow-xl hover:-translate-y-2 border border-slate-700 hover:ring-2 hover:ring-orange-400/50 active:scale-[0.98] cursor-pointer p-4">
-        <img src={subCategory.imageUrl || 'https://placehold.co/200x200/1e293b/475569?text=Image'} alt={subCategory.name} className="w-32 h-32 object-cover rounded-full mb-3 group-hover:scale-105 transition-transform duration-300" />
+        <img src={getFullImageUrl(subCategory.imageUrl)} alt={subCategory.name} className="w-32 h-32 object-cover rounded-full mb-3 group-hover:scale-105 transition-transform duration-300" />
         <h4 className="text-md font-semibold text-slate-100 capitalize truncate group-hover:text-orange-300">{subCategory.name}</h4>
     </button>
 );
@@ -231,11 +254,11 @@ const DashboardPage = () => {
         return currentMinutes >= startMinutes && currentMinutes <= endMinutes;
     }, [serviceHours]);
 
-    // 🟢 UPDATED: Include 'Essentials' category
+    // 🟢 UPDATED: Include 'Essentials' category
     const visibleCategories = useMemo(() => {
         let categories = [
             { name: 'Snacks', icon: GiIceCreamCone },
-            { name: 'Essentials', icon: GiNotebook }, // 🟢 Added Essentials
+            { name: 'Essentials', icon: GiNotebook }, // 🟢 Added Essentials
             { name: 'Stationery', icon: GiNotebook },
             { name: 'Favorites', icon: FaHeart }
         ];
@@ -375,11 +398,11 @@ const DashboardPage = () => {
             const endpoint = `${API_BASE_URL}/student/favorites/${itemId}`;
             // 🟢 FIX: Use Authorization header for consistency with backend
             const response = await fetch(endpoint, { 
-                method, 
-                headers: { 
-                    'Authorization': `Bearer ${token}` 
-                } 
-            });
+                method, 
+                headers: { 
+                    'Authorization': `Bearer ${token}` 
+                } 
+            });
             if (response.status === 401) {
                 alert('Session expired. Please log in again.');
                 localStorage.clear();
@@ -401,7 +424,7 @@ const DashboardPage = () => {
     const availableItems = useMemo(() => {
         return menuItems.filter(item => {
             if (item.stock <= 0) return false;
-            // 🟢 UPDATED: Allow Stationery and Essentials when canteen is open
+            // 🟢 UPDATED: Allow Stationery and Essentials when canteen is open
             if (item.category === 'Snacks' || item.category === 'Stationery' || item.category === 'Essentials') return true; 
             if (item.category === 'Breakfast' && isTimeSlotActive('breakfastStart', 'breakfastEnd')) return true;
             if (item.category === 'Lunch' && isTimeSlotActive('lunchStart', 'lunchEnd')) return true;
