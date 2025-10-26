@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; 
-import { FaChevronLeft, FaShoppingCart, FaCheckCircle, FaHourglassHalf, FaClock, FaClipboardCheck, FaTimesCircle } from 'react-icons/fa';
+import { FaChevronLeft, FaShoppingCart, FaCheckCircle, FaHourglassHalf, FaClock, FaClipboardCheck, FaTimesCircle, FaReceipt } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
 const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
@@ -30,23 +30,26 @@ const getStatusDisplay = (status) => {
 
 const OrderDetailsPage = () => {
     const navigate = useNavigate();
-    const { orderId } = useParams(); // CORRECTLY extracts the ID from the URL
+    const { orderId } = useParams(); 
     
     const [order, setOrder] = useState(null); 
-    const [token, setToken] = useState(null); 
     const [loading, setLoading] = useState(true); 
     const [error, setError] = useState(null);
+    const [studentName, setStudentName] = useState('Customer');
 
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('token');
+        // Load student name for display
+        const studentData = localStorage.getItem('student');
+        if (studentData) {
+            setStudentName(JSON.parse(studentData).name);
+        }
 
+        const storedToken = localStorage.getItem('token');
         if (!storedToken) {
             navigate('/login', { replace: true });
             return;
         }
-
-        setToken(storedToken);
 
         if (!orderId) {
             setError('No order ID provided.');
@@ -57,7 +60,6 @@ const OrderDetailsPage = () => {
         const fetchOrder = async (tkn) => {
             setLoading(true); 
             try {
-                // CORRECT API CALL: Uses the ID from useParams()
                 const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
                     headers: getAuthHeaders(tkn),
                 });
@@ -67,8 +69,7 @@ const OrderDetailsPage = () => {
                 if (err.response?.status === 401) {
                     navigate('/login', { replace: true });
                 } else {
-                    // This error is likely what you were seeing if the ID was invalid or the order didn't belong to the user
-                    setError('Failed to fetch order details. It may be expired or invalid.'); 
+                    setError('Failed to fetch order details. It may be expired or access is denied.'); 
                 }
             } finally {
                 setLoading(false);
@@ -80,7 +81,7 @@ const OrderDetailsPage = () => {
     }, [navigate, orderId]); 
 
     
-    // --- Rendering based on state (must come before final return) ---
+    // --- Rendering based on state (Loading and Error Handlers) ---
 
     if (loading) {
         return (
@@ -98,19 +99,18 @@ const OrderDetailsPage = () => {
             <div className="min-h-screen bg-slate-900 text-slate-100 p-8 text-center">
                 <h2 className="text-2xl font-bold text-red-400">Order Error</h2>
                 <p className="mt-2 text-lg text-slate-400">{error || 'Order details not found.'}</p>
-                <button onClick={() => navigate('/my-orders')} className="mt-6 bg-orange-500 text-white font-bold py-3 px-8 rounded-lg">Back to History</button>
+                <button onClick={() => navigate('/my-orders')} className="mt-6 bg-orange-500 text-white font-bold py-3 px-8 rounded-lg transition-all hover:bg-orange-600 active:scale-95">Back to History</button>
             </div>
         );
     }
 
     // --- Data Processing for Display ---
     const billDisplay = order.billNumber || order._id;
-    const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Unknown');
-    const orderDate = new Date(order.orderDate).toLocaleString('en-IN', {
-        dateStyle: 'full', 
+    const paymentMethodDisplay = order.paymentMethod || (order.razorpayPaymentId ? 'UPI/Card (Paid)' : 'Cash on Delivery (Pending)');
+    const formattedDate = new Date(order.orderDate).toLocaleString('en-IN', {
+        dateStyle: 'medium',
         timeStyle: 'short',
     });
-    const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
     const statusDisplay = getStatusDisplay(order.status);
     
     return (
@@ -118,74 +118,93 @@ const OrderDetailsPage = () => {
             <Navbar />
             <main className="container mx-auto p-4 md:p-8">
                 
-                <div className="bg-slate-800 p-8 rounded-xl shadow-2xl max-w-5xl mx-auto border border-slate-700">
+                <div className="bg-slate-800 p-6 md:p-10 rounded-2xl shadow-2xl max-w-md w-full mx-auto border border-slate-700">
+                    
                     <button 
                         onClick={() => navigate('/my-orders')} 
                         className="text-slate-400 hover:text-orange-400 transition-colors flex items-center mb-6 active:scale-95"
                     >
                         <FaChevronLeft size={20} className="mr-2" /> Back to History
                     </button>
-
                     
-                    <div className="flex justify-between items-start border-b border-slate-700 pb-4 mb-6">
-                        <div>
-                            <h1 className="text-4xl font-extrabold text-slate-100 mb-2">
-                                Order Receipt
-                            </h1>
-                            <p className="text-lg text-orange-400 font-semibold">
-                                Bill No: {billDisplay}
-                            </p>
+                    <div className="text-center">
+                        <div className="w-16 h-16 mx-auto mb-2">
+                            <FaReceipt className="w-full h-full text-orange-400" />
                         </div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-base font-semibold text-slate-400 mb-2">Payment Method:</span>
-                            <span className="text-lg font-bold text-slate-200">{paymentMethodDisplay}</span>
-                        </div>
+                        <h1 className="text-2xl font-extrabold text-slate-100 mb-1">Order Details</h1>
+                        <p className="text-slate-400">Your Official Transaction Receipt</p>
                     </div>
 
-
-                    <div className="space-y-4 text-slate-200">
-                        <div className="flex justify-between border-b border-slate-700 pb-3">
-                            <span className="font-semibold text-slate-400">Date & Time:</span>
-                            <span className='font-medium text-base md:text-lg'>{orderDate}</span>
-                        </div>
-                        <div className="flex justify-between border-b border-slate-700 pb-3">
-                            <span className="font-semibold text-slate-400">Total Quantity:</span>
-                            <span className='font-medium text-base md:text-lg'>{totalItems} items</span>
-                        </div>
-                        <div className="flex justify-between items-center bg-slate-700/50 p-3 rounded-lg">
-                            <span className="font-extrabold text-slate-200 text-lg">Order Status:</span>
-                            <span className={statusDisplay.className}>
+                    
+                    {/* Receipt Container */}
+                    <div className="bg-slate-700/50 p-6 rounded-lg border-2 border-dashed border-orange-500/50 shadow-inner mt-6">
+                        <div className="text-center mb-6">
+                            <h2 className="text-xl font-extrabold text-slate-100">JJ College Smart Canteen</h2>
+                            <span className={statusDisplay.className + " mt-2 mx-auto"}>
                                 <statusDisplay.Icon size={16} /> {statusDisplay.text}
                             </span>
                         </div>
-                    </div>
-
-                    <h2 className="text-2xl font-bold text-slate-100 mt-8 mb-4 border-b border-slate-700 pb-2">Items Purchased</h2>
-                    
-                    <ul className="space-y-3">
-                        {order.items.map((item, index) => (
-                            <li key={index} className="flex justify-between items-center text-lg text-slate-300 bg-slate-700/50 p-4 rounded-xl">
-                                <div className="font-semibold text-slate-200">
-                                    {item.name} <span className="text-orange-400 font-bold text-base">(x{item.quantity})</span>
+                        
+                        {/* Bill Number Section */}
+                        <div className="text-center my-6 py-3 border-y border-slate-600">
+                            <p className="text-sm text-slate-400 mb-1">REFERENCE BILL NUMBER</p>
+                            <p className="font-extrabold text-orange-400 text-3xl mt-1 font-mono">{billDisplay}</p>
+                        </div>
+                        
+                        {/* Order Meta Data */}
+                        <div className="space-y-3 text-base text-slate-200 mb-4 border-t border-b border-slate-600 py-3">
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-slate-400">Student Name:</span>
+                                <span className='font-medium'>{studentName}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-slate-400">Payment:</span>
+                                <span className={`font-medium ${order.status !== 'Pending' ? 'text-green-400' : 'text-blue-400'}`}>{paymentMethodDisplay}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="font-semibold text-slate-400">Date:</span>
+                                <span className='font-medium'>{formattedDate}</span>
+                            </div>
+                        </div>
+                        
+                        {/* Itemized List Header */}
+                        <div className="py-3 my-4">
+                            <div className="flex justify-between font-extrabold text-slate-100 text-sm border-b border-slate-600 pb-2 mb-2">
+                                <span className="w-1/2">ITEM</span>
+                                <span className="w-1/4 text-center">QTY</span>
+                                <span className="w-1/4 text-right">AMOUNT</span>
+                            </div>
+                            {/* Itemized List Details */}
+                            {order.items.map((item, index) => (
+                                <div key={item._id || index} className="flex justify-between text-slate-300 text-sm mt-2">
+                                    <span className="w-1/2 truncate">{item.name}</span>
+                                    <span className="w-1/4 text-center font-medium">{item.quantity}</span>
+                                    <span className="w-1/4 text-right">₹{(item.price * item.quantity).toFixed(2)}</span>
                                 </div>
-                                <span className="text-xl font-medium text-slate-100">₹{(item.price * item.quantity).toFixed(2)}</span>
-                            </li>
-                        ))}
-                    </ul>
+                            ))}
+                        </div>
 
-                    
-                    <div className="mt-10 pt-6 border-t-4 border-slate-600 flex justify-between items-center">
-                        <span className="text-2xl font-semibold text-slate-100">GRAND TOTAL:</span>
-                        <span className="text-5xl font-extrabold text-green-400">₹{order.totalAmount.toFixed(2)}</span>
+                        {/* Total Amount */}
+                        <div className="flex justify-between font-extrabold text-2xl text-slate-100 mt-6 pt-3 border-t-2 border-slate-600">
+                            <span className='text-orange-400'>GRAND TOTAL:</span>
+                            <span className='text-green-400'>₹{order.totalAmount.toFixed(2)}</span>
+                        </div>
                     </div>
 
-                    <div className="mt-8 text-center">
-                        <button 
-                            onClick={() => navigate('/dashboard')}
-                            className="bg-orange-500 text-white font-bold py-3 px-8 rounded-lg hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center mx-auto gap-2 shadow-xl shadow-orange-500/30 text-lg"
+                    {/* Button Links */}
+                    <div className="mt-8 space-y-3">
+                        <Link 
+                            to="/dashboard" 
+                            className="block w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition-all active:scale-95 text-center shadow-lg shadow-orange-500/30 flex items-center justify-center gap-2"
                         >
-                            <FaShoppingCart size={20} /> Place a New Order
-                        </button>
+                            <FaShoppingCart size={20} /> Start a New Order
+                        </Link>
+                        <Link 
+                            to="/my-orders" 
+                            className="block w-full bg-slate-700 text-slate-300 font-semibold py-3 rounded-lg hover:bg-slate-600 transition-all active:scale-95 text-center"
+                        >
+                            View All History
+                        </Link>
                     </div>
                 </div>
             </main>
