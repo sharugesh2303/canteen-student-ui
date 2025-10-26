@@ -2,6 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
+// --- API Configuration ---
+// FIX APPLIED: Temporarily hardcode API path for compilation environments
+// NOTE: For live deployment on Vercel, this relies on VITE_API_URL being correctly injected.
+const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api'; 
+// --- End API Config ---
+
 // --- SVG Icons (for a clean, dependency-free component) ---
 const UserIcon = ({ className }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} width="1em" height="1em" viewBox="0 0 448 512" fill="currentColor">
@@ -35,7 +41,8 @@ const LoginPage = () => {
         setError('');
         setLoading(true);
         try {
-            const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+            // Using the constant API_BASE_URL
+            const response = await axios.post(`${API_BASE_URL}/auth/login`, formData);
 
             localStorage.setItem('token', response.data.token);
             // Ensure data is saved under the 'student' key
@@ -49,7 +56,7 @@ const LoginPage = () => {
             setLoading(false);
         }
     };
-    
+        
     // This tells the browser to look for 'jjcet.jpg' in your project's `public` folder.
     const backgroundImageUrl = '/jjcet.jpg';
 

@@ -1,3 +1,7 @@
+/* ==================================
+ * FILE: src/pages/CartPage.jsx
+ * ================================== */
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -6,7 +10,8 @@ import axios from 'axios';
 import { FaTrash, FaPlus, FaMinus } from 'react-icons/fa';
 
 // --- CONFIGURATION ---
-const API_BASE_URL = 'http://localhost:5000/api';
+// 🟢 FIX APPLIED: Use VITE_API_URL from environment variables (set in Vercel)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Helper function to dynamically load the Razorpay script
 const loadRazorpayScript = (src) => {
@@ -18,6 +23,12 @@ const loadRazorpayScript = (src) => {
         document.body.appendChild(script);
     });
 };
+
+// Helper function for Authorization Header
+const getAuthHeaders = (token) => ({
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+});
 
 const CartPage = () => {
     const { cart, setCart } = useCart();
@@ -85,39 +96,39 @@ const CartPage = () => {
         }
 
         const token = localStorage.getItem('token');
-        
-        // 1. Construct the complete order payload 
-        const orderPayload = {
-            amount: totalPrice,
-            items: cart.map(item => ({
-                _id: item._id, // MenuItem ID
-                name: item.name,
-                quantity: item.quantity,
-                price: item.price // Price per unit
-            })),
-        };
+        
+        // 1. Construct the complete order payload 
+        const orderPayload = {
+            amount: totalPrice,
+            items: cart.map(item => ({
+                _id: item._id, // MenuItem ID
+                name: item.name,
+                quantity: item.quantity,
+                price: item.price // Price per unit
+            })),
+        };
 
         try {
             // 2. Send the full order payload to the payment/orders endpoint
             const orderResponse = await axios.post(
-                `${API_BASE_URL}/payment/orders`, 
-                orderPayload, 
-                { 
-                    headers: { 
-                        'x-auth-token': token // Send student token
-                    } 
-                }
-            );
+                `${API_BASE_URL}/payment/orders`, 
+                orderPayload, 
+                { 
+                    // 🟢 FIX: Use Bearer token for Authorization
+                    headers: getAuthHeaders(token)
+                }
+            );
             
-            const orderData = orderResponse.data;
+            const orderData = orderResponse.data;
 
             // 3. CRITICAL FRONTEND FIX: ACCESS VITE ENV VARIABLE
+            // 🟢 NOTE: This is designed to pull from Vercel's injected variables
             const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY_ID;
 
-            if (!RAZORPAY_KEY) {
-                // If the key is missing, throw an error to catch below
-                throw new Error("Razorpay Key ID (VITE_RAZORPAY_KEY_ID) is missing in frontend environment. Check your .env file.");
-            }
+            if (!RAZORPAY_KEY) {
+                // If the key is missing, throw an error to catch below
+                throw new Error("Razorpay Key ID (VITE_RAZORPAY_KEY_ID) is missing in frontend environment. Check your Vercel environment variables.");
+            }
 
             const options = {
                 key: RAZORPAY_KEY, // Use the safely checked variable
@@ -134,7 +145,10 @@ const CartPage = () => {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_signature: response.razorpay_signature,
                             orderPayload: { items: cart, totalAmount: totalPrice }, 
-                        }, { headers: { 'x-auth-token': token } });
+                        }, { 
+                            // 🟢 FIX: Use Bearer token for Authorization
+                            headers: getAuthHeaders(token)
+                        });
 
                         if (verificationResponse.data.order) {
                             setCart([]);
@@ -161,13 +175,13 @@ const CartPage = () => {
             paymentObject.open();
 
         } catch (error) {
-            // Log the full error to the console for detailed debugging
-            console.error('Payment Setup Error (FATAL):', error.response || error.message); 
-            
-            // Display friendly message
-            const friendlyMessage = error.message.includes("VITE_RAZORPAY_KEY_ID") 
-                ? "Setup Error: Razorpay Key ID is missing in your .env file."
-                : `Payment setup failed. Details: ${error.response?.data?.message || error.message}`;
+            // Log the full error to the console for detailed debugging
+            console.error('Payment Setup Error (FATAL):', error.response || error.message); 
+            
+            // Display friendly message
+            const friendlyMessage = error.message.includes("VITE_RAZORPAY_KEY_ID") 
+                ? "Setup Error: Razorpay Key ID is missing in your Vercel environment variables."
+                : `Payment setup failed. Details: ${error.response?.data?.message || error.message}`;
 
             alert(friendlyMessage);
             setIsPlacingOrder(false);

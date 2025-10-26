@@ -1,8 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
-// Set the rotation interval to 30 minutes (30 * 60 * 1000 milliseconds)
+// --- CONFIGURATION ---
+// 🟢 FIX APPLIED: Use VITE_API_URL from environment variables (set in Vercel)
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// The admin intends for a very long rotation interval (30 minutes).
 const ROTATION_INTERVAL = 30 * 60 * 1000; 
+const FETCH_INTERVAL = 5 * 60 * 1000; // Refetch ads every 5 minutes
 
 const AdRotator = () => {
     const [ads, setAds] = useState([]);
@@ -12,12 +16,16 @@ const AdRotator = () => {
     // Function to fetch active ads from the backend
     const fetchActiveAds = useCallback(async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/advertisements/active');
+            // 🟢 FIX: Use dynamic API_BASE_URL
+            const response = await axios.get(`${API_BASE_URL}/advertisements/active`);
             
-            // Only update ads if the list has changed (optimization)
-            if (JSON.stringify(response.data) !== JSON.stringify(ads)) {
-                setAds(response.data);
-                // Reset index if the list of ads changes
+            // Basic check to see if the content has truly changed
+            const newAds = response.data || [];
+            
+            // Check if the new list of ads is different from the old list (by length and string comparison)
+            if (newAds.length !== ads.length || JSON.stringify(newAds) !== JSON.stringify(ads)) {
+                setAds(newAds);
+                // Reset index only if the ad list changes, to ensure a fresh start
                 setCurrentAdIndex(0); 
             }
             setLoading(false);
@@ -27,18 +35,18 @@ const AdRotator = () => {
         }
     }, [ads]);
 
-    // 1. Initial Fetch and Periodic Fetch (e.g., every 5 mins)
+    // 1. Initial Fetch and Periodic Fetch (every 5 mins)
     useEffect(() => {
         fetchActiveAds();
 
-        // Optional: Refetch the list of active ads every 5 minutes in case admin changes them
-        const fetchInterval = setInterval(fetchActiveAds, 5 * 60 * 1000); 
+        // Refetch the list of active ads every 5 minutes
+        const fetchInterval = setInterval(fetchActiveAds, FETCH_INTERVAL); 
         return () => clearInterval(fetchInterval);
     }, [fetchActiveAds]);
 
     // 2. Ad Rotation Logic (every 30 minutes)
     useEffect(() => {
-        if (ads.length === 0) return;
+        if (ads.length === 0 || ads.length === 1) return;
 
         // Set up the 30-minute timer for rotation
         const rotationTimer = setInterval(() => {
