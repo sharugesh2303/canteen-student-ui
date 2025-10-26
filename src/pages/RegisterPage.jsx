@@ -3,8 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 
 // --- CONFIGURATION ---
-// 🟢 FIX APPLIED: Use VITE_API_URL from environment variables (set in Vercel)
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// 🔴 FIX APPLIED: Temporarily hardcode API path for compilation environments
+const API_BASE_URL = 'https://jj-canteen-backend-jakh.onrender.com/api';
 // 🟢 Background Image URL (Assumes jjcet.jpg is in the public folder)
 const BACKGROUND_IMAGE_URL = '/jjcet.jpg'; 
 // --- End API Config ---
@@ -17,7 +17,6 @@ const CapIcon = ({ size, className }) => (<svg xmlns="http://www.w3.org/2000/svg
 
 
 const RegisterPage = () => {
-    // Removed registerNumber from state
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -34,7 +33,6 @@ const RegisterPage = () => {
         setError('');
         setSuccessMsg('');
 
-        // Updated check to only require name, email, and password
         if (!name || !email || !password) {
             setError('Please fill in all fields.');
             setLoading(false);
@@ -42,7 +40,6 @@ const RegisterPage = () => {
         }
 
         try {
-            // 🟢 FIX APPLIED: Use API_BASE_URL
             const response = await axios.post(`${API_BASE_URL}/auth/register-email-otp`, { name, email });
             setSuccessMsg(response.data.message);
             setIsOtpSent(true);
@@ -59,7 +56,6 @@ const RegisterPage = () => {
         setError('');
         setSuccessMsg('');
         try {
-            // 🟢 FIX APPLIED: Use API_BASE_URL
             const response = await axios.post(`${API_BASE_URL}/auth/verify-email-otp`, { email, otp, password });
             setSuccessMsg(response.data.message + " Redirecting to login...");
             
@@ -74,72 +70,75 @@ const RegisterPage = () => {
     };
 
     return (
-        // 🟢 UPDATED: Use background image and full screen styling
         <div 
-            className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4"
+            className="min-h-screen flex flex-col items-center justify-center bg-cover bg-center p-4 relative"
             style={{ backgroundImage: `url(${BACKGROUND_IMAGE_URL})` }}
         >
-            {/* 🟢 ADDED: Dark overlay for readability */}
             <div className="absolute inset-0 bg-black opacity-60"></div>
             
             <div className="text-center text-white mb-8 relative z-10">
-                <div className="inline-block bg-white p-4 rounded-full mb-4 shadow-lg">
-                    <CapIcon size={40} className="text-cyan-600" />
+                {/* 🟢 UPDATED: CapIcon background color to match darker theme */}
+                <div className="inline-block bg-gray-700 p-4 rounded-full mb-4 shadow-lg">
+                    <CapIcon size={40} className="text-indigo-400" />
                 </div>
-                <h1 className="text-4xl font-bold">JJ College Canteen</h1>
-                <p className="text-lg mt-2 font-light">Student Register</p>
+                <h1 className="text-4xl font-bold text-white">JJ College Canteen</h1>
+                <p className="text-lg mt-2 font-light text-indigo-400">Student Register</p>
             </div>
 
-            {/* 🟢 UPDATED: Form container with translucent background */}
-            <div className="bg-white w-full max-w-md p-8 rounded-2xl shadow-lg relative z-10 bg-opacity-90 backdrop-blur-sm">
-                <h2 className="text-2xl font-bold text-gray-800 text-center mb-6">Create New Account</h2>
+            {/* 🟢 UPDATED: Form container styling */}
+            <div className="relative z-10 p-8 bg-gray-800 bg-opacity-90 rounded-xl shadow-2xl w-full max-w-md text-center border-t-4 border-indigo-500">
+                <h2 className="text-2xl font-bold text-white text-center mb-6">Create New Account</h2>
                 
                 <form className="space-y-4" onSubmit={isOtpSent ? handleVerifyOtp : handleSendOtp}>
                     
-                    {/* --- STEP 1: Registration Details (Visible until OTP is sent) --- */}
                     {!isOtpSent && (
                         <>
                             <div className="relative">
-                                <label htmlFor="name" className="block text-gray-700 text-sm font-semibold mb-1">Name</label>
-                                <span className="absolute inset-y-0 left-0 top-6 flex items-center pl-3">
-                                    <UserIcon className="text-gray-400" />
+                                {/* 🟢 UPDATED: Label color */}
+                                <label htmlFor="name" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Name</label>
+                                <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3">
+                                    <UserIcon className="text-gray-400 w-5 h-5" />
                                 </span>
+                                {/* 🟢 UPDATED: Input styling */}
                                 <input type="text" id="name" placeholder="Full Name" required
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     value={name} onChange={(e) => setName(e.target.value)} />
                             </div>
 
-                            {/* Removed the Register Number input field */}
-
                             <div className="relative">
-                                <label htmlFor="email" className="block text-gray-700 text-sm font-semibold mb-1">Email Address (for OTP)</label>
-                                <span className="absolute inset-y-0 left-0 top-6 flex items-center pl-3">
-                                    <MailIcon className="text-gray-400" />
+                                {/* 🟢 UPDATED: Label color */}
+                                <label htmlFor="email" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Email Address (for OTP)</label>
+                                <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3">
+                                    <MailIcon className="text-gray-400 w-5 h-5" />
                                 </span>
+                                {/* 🟢 UPDATED: Input styling */}
                                 <input type="email" id="email" placeholder="e.g. name@college.com" required
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     value={email} onChange={(e) => setEmail(e.target.value)} />
                             </div>
 
                             <div className="relative">
-                                <label htmlFor="password" className="block text-gray-700 text-sm font-semibold mb-1">Password</label>
-                                <span className="absolute inset-y-0 left-0 top-6 flex items-center pl-3">
-                                    <LockIcon className="text-gray-400" />
+                                {/* 🟢 UPDATED: Label color */}
+                                <label htmlFor="password" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Password</label>
+                                <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3">
+                                    <LockIcon className="text-gray-400 w-5 h-5" />
                                 </span>
+                                {/* 🟢 UPDATED: Input styling */}
                                 <input type="password" id="password" placeholder="Create Password" required
-                                    className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                    className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                     value={password} onChange={(e) => setPassword(e.target.value)} />
                             </div>
                         </>
                     )}
 
-                    {/* --- STEP 2: OTP Verification (Visible after OTP is sent) --- */}
                     {isOtpSent && (
                         <div className="relative">
-                            <label htmlFor="otp" className="block text-gray-700 text-sm font-semibold mb-1">Verification Code (Check your email)</label>
-                            <span className="absolute inset-y-0 left-0 top-6 flex items-center pl-3 text-cyan-600 font-bold">#</span>
+                            {/* 🟢 UPDATED: Label color */}
+                            <label htmlFor="otp" className="block text-gray-200 text-sm font-semibold mb-1 text-left">Verification Code (Check your email)</label>
+                            <span className="absolute inset-y-0 left-0 top-1/2 transform translate-y-2 flex items-center pl-3 text-indigo-400 font-bold">#</span>
+                            {/* 🟢 UPDATED: Input styling */}
                             <input type="text" id="otp" placeholder="Enter 6-digit OTP" required
-                                className="w-full pl-10 pr-4 py-2 border rounded-lg text-gray-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                                className="w-full pl-10 pr-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                                 value={otp} onChange={(e) => setOtp(e.target.value)} />
                         </div>
                     )}
@@ -147,20 +146,21 @@ const RegisterPage = () => {
                     {error && <p className="text-red-500 text-center text-sm">{error}</p>}
                     {successMsg && <p className="text-green-500 text-center text-sm">{successMsg}</p>}
 
+                    {/* 🟢 UPDATED: Button styling to match admin login */}
                     <button type="submit" disabled={loading}
-                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-bold py-3 px-4 rounded-lg hover:from-cyan-600 hover:to-blue-600 transition duration-300 disabled:opacity-50">
-                        {loading ? (isOtpSent ? 'Verifying...' : 'Sending OTP...') : (isOtpSent ? 'Verify OTP & Finish' : 'Register & Get OTP')}
+                        className="w-full flex items-center justify-center py-3 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition duration-200 shadow-md disabled:opacity-50">
+                            {loading ? (isOtpSent ? 'Verifying...' : 'Sending OTP...') : (isOtpSent ? 'Verify OTP & Finish' : 'Register & Get OTP')}
                     </button>
                 </form>
 
-                <p className="text-center text-gray-600 mt-6 text-sm">
+                <p className="text-center text-gray-400 mt-6 text-sm">
                     Already have an account?{' '}
-                    <Link to="/login" className="text-blue-600 hover:underline font-semibold">
+                    <Link to="/login" className="text-indigo-400 hover:underline font-semibold">
                         Sign In
                     </Link>
                 </p>
-                {/* 🟢 ADDED: Powered by Nexora footer */}
-                <p className="text-center text-gray-500 text-xs mt-4">
+                {/* 🟢 UPDATED: Powered by Nexora footer with larger text and adjusted color */}
+                <p className="text-center text-gray-500 text-base mt-4"> {/* Increased text size to 'text-base' */}
                     Powered by Nexora
                 </p>
             </div>
