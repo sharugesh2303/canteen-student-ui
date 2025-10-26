@@ -29,16 +29,17 @@ const getStatusDisplay = (status) => {
 };
 
 const OrderDetailsPage = () => {
-    const location = useLocation();
     const navigate = useNavigate();
     const { orderId } = useParams(); 
     
-    const [order, setOrder] = useState(null); // Start with null, data will be fetched
+    // NOTE: We don't use location.state anymore to set initial order, 
+    // we always fetch for robustness.
+    const [order, setOrder] = useState(null); 
     const [token, setToken] = useState(null); 
     const [loading, setLoading] = useState(true); 
     const [error, setError] = useState(null);
 
-    // 1. Check for Token
+    // 1. Check for Token and OrderId
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         if (!storedToken) {
@@ -55,12 +56,14 @@ const OrderDetailsPage = () => {
 
     // 2. Fetch Order Data, triggered when token and orderId are available
     useEffect(() => {
-        // 🔑 FIX: Always run fetch when token and orderId are present.
-        // This ensures data integrity and prevents crashes from corrupted location.state data.
+        // 🔑 FIX APPLIED: Check only for token and orderId. We always fetch now.
         if (token && orderId) {
             const fetchOrder = async () => {
-                setLoading(true);
+                // Ensure loading state is set before API call
+                if (!order) setLoading(true); 
+
                 try {
+                    // This request is key: /api/orders/:id
                     const response = await axios.get(`${API_BASE_URL}/orders/${orderId}`, {
                         headers: getAuthHeaders(token),
                     });
@@ -77,10 +80,11 @@ const OrderDetailsPage = () => {
                 }
             };
             fetchOrder();
-        }
-        // Set loading to false if fetch conditions aren't met (e.g., missing token/id)
-        if (!token || !orderId) setLoading(false); 
-    }, [token, orderId, navigate]); // Dependencies updated
+        } else if (token && !orderId) {
+            // If token is present but no orderId, stop loading
+            setLoading(false);
+        }
+    }, [token, orderId, navigate]); 
 
     if (loading) {
         return (
